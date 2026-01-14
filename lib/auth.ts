@@ -20,7 +20,7 @@ export async function login(password: string, username: string) {
         // Set a simple session cookie
         cookieStore.set(SESSION_COOKIE_NAME, 'authenticated', {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
+            secure: process.env.COOKIE_SECURE === 'true', // Only use secure cookies if explicitly configured (for HTTPS)
             maxAge: 60 * 60 * 24, // 24 hours
             path: '/',
         });
