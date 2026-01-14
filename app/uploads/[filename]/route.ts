@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { readFile } from "fs/promises";
 import path from "path";
-import { getType } from "mime"; // You might need to add mime-types or just fallback
 
 export async function GET(
     request: Request,
