@@ -10,6 +10,7 @@ import { getPromptTags, getRelatedPrompts, recordCopy, recordLike } from "@/lib/
 import { TagList } from "@/components/tag-badge"
 import { StatsBadge } from "@/components/stats-badge"
 import { ImageCard } from "@/components/image-card"
+import { copyToClipboard } from "@/lib/utils"
 
 interface ImageModalProps {
     prompt: Prompt | null
@@ -77,10 +78,10 @@ export function ImageModal({ prompt, open, onOpenChange, onSelectPrompt }: Image
     const tags = getPromptTags(prompt)
     const relatedPrompts = getRelatedPrompts(prompt, 6)
 
-    const handleCopyPrompt = (e?: React.MouseEvent) => {
+    const handleCopyPrompt = async (e?: React.MouseEvent) => {
         e?.stopPropagation()
-        if (typeof window !== 'undefined' && navigator.clipboard) {
-            navigator.clipboard.writeText(prompt.content)
+        const success = await copyToClipboard(prompt.content)
+        if (success) {
             recordCopy(prompt.id)
             setCopiesCount(prev => prev + 1)
             setCopied(true)

@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
+import { cn, copyToClipboard } from "@/lib/utils"
 import { Copy, Check } from "lucide-react"
 import { recordCopy } from "@/lib/data-utils"
 
@@ -14,9 +15,9 @@ interface CopyPromptButtonProps {
 export function CopyPromptButton({ promptId, content, size = "sm" }: CopyPromptButtonProps) {
     const [copied, setCopied] = useState(false)
 
-    const handleCopy = () => {
-        if (typeof window !== 'undefined' && navigator.clipboard) {
-            navigator.clipboard.writeText(content)
+    const handleCopy = async () => {
+        const success = await copyToClipboard(content)
+        if (success) {
             recordCopy(promptId)
             setCopied(true)
             setTimeout(() => setCopied(false), 2000)
