@@ -22,7 +22,7 @@ services:
       # 挂载数据目录（JSON数据库文件）
       - ./data:/app/data
       # 挂载图片上传目录
-      - ./uploads:/app/public/uploads
+      - ./public/uploads:/app/public/uploads
     networks:
       - nano-network
 
