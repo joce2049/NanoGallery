@@ -95,11 +95,6 @@ export default function TopPage() {
                             <div className="masonry-grid">
                                 {topPrompts.map((prompt, index) => (
                                     <div key={prompt.id} className="masonry-item relative group">
-                                        {index < 3 && (
-                                            <div className="absolute top-2 left-2 z-10 bg-gradient-to-br from-yellow-400 to-orange-500 text-white font-bold rounded-full h-8 w-8 flex items-center justify-center text-sm shadow-lg pointer-events-none">
-                                                {index + 1}
-                                            </div>
-                                        )}
                                         <ImageCard
                                             prompt={prompt}
                                             onCardClick={() => handleCardClick(prompt)}
