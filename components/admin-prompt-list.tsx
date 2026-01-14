@@ -106,7 +106,9 @@ export function AdminPromptList({ initialPrompts }: AdminPromptListProps) {
                                     }`}>
                                     {prompt.status === 'published' ? '已发布' : '草稿'}
                                 </span>
-                                <span className="text-xs text-muted-foreground">{new Date(prompt.createdAt).toLocaleDateString()}</span>
+                                <span className="text-xs text-muted-foreground">
+                                    {prompt.createdAt ? new Date(prompt.createdAt).toLocaleDateString() : 'N/A'}
+                                </span>
                             </div>
                         </div>
 

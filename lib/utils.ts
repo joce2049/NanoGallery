@@ -27,14 +27,24 @@ export async function copyToClipboard(text: string): Promise<boolean> {
     textArea.style.position = "fixed"
     textArea.style.left = "-9999px"
     textArea.style.top = "0"
+    textArea.setAttribute('readonly', '')
 
     document.body.appendChild(textArea)
+
+    // Select text (critical for mobile)
     textArea.focus()
     textArea.select()
+    textArea.setSelectionRange(0, 99999) // For mobile devices
 
     const success = document.execCommand('copy')
     document.body.removeChild(textArea)
-    return success
+
+    if (success) {
+      return true
+    } else {
+      console.warn('execCommand returned false')
+      return false
+    }
   } catch (err) {
     console.error('Fallback copy failed', err)
     return false
