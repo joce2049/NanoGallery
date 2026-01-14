@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils"
 import { useTheme } from "next-themes"
 import { siteConfig } from "@/lib/config"
 
-// import { LoginModal } from "@/components/auth/login-modal"
+import { LoginModal } from "@/components/auth/login-modal"
 
 import { useRouter } from "next/navigation"
 
@@ -211,20 +211,19 @@ function SidebarContent({ isLoggedIn = false }: SidebarProps) {
                             {loggingOut ? "退出中..." : "退出登录"}
                         </Button>
                     ) : (
-                        <Link href="/admin">
-                            <Button
-                                variant="ghost"
-                                className="w-full justify-start text-sidebar-foreground"
-                                size="sm"
-                            >
-                                <User className="mr-2 h-4 w-4" />
-                                登录
-                            </Button>
-                        </Link>
+                        <Button
+                            variant="ghost"
+                            className="w-full justify-start text-sidebar-foreground"
+                            size="sm"
+                            onClick={() => setLoginOpen(true)}
+                        >
+                            <User className="mr-2 h-4 w-4" />
+                            登录
+                        </Button>
                     )}
                 </div>
             </div>
-            {/* Removed LoginModal */}
+            <LoginModal open={loginOpen} onOpenChange={setLoginOpen} />
             {/* <LoginModal open={loginOpen} onOpenChange={setLoginOpen} /> */}
 
             <AlertDialog open={showLogoutConfirm} onOpenChange={setShowLogoutConfirm}>

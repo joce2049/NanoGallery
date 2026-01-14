@@ -12,7 +12,7 @@ import { getAllCategories } from "@/lib/data-utils"
 import { useState, Suspense } from "react"
 import { cn } from "@/lib/utils"
 
-// import { LoginModal } from "@/components/auth/login-modal"
+import { LoginModal } from "@/components/auth/login-modal"
 import { useRouter } from "next/navigation"
 
 import {
@@ -185,20 +185,23 @@ function MobileSidebarContent({ isLoggedIn = false }: MobileSidebarProps) {
                                 {loggingOut ? "退出中..." : "退出登录"}
                             </Button>
                         ) : (
-                            <Link href="/admin" onClick={() => setOpen(false)}>
-                                <Button
-                                    variant="ghost"
-                                    className="w-full justify-start"
-                                    size="sm"
-                                >
-                                    <User className="mr-2 h-4 w-4" />
-                                    登录
-                                </Button>
-                            </Link>
+                            <Button
+                                variant="ghost"
+                                className="w-full justify-start"
+                                size="sm" // Removed onClick for setOpen(false) to keep modal context open if needed
+                                onClick={() => {
+                                    setOpen(false) // Close sidebar
+                                    setLoginOpen(true) // Open modal
+                                }}
+                            >
+                                <User className="mr-2 h-4 w-4" />
+                                登录
+                            </Button>
                         )}
                     </div>
                 </div>
             </SheetContent>
+            <LoginModal open={loginOpen} onOpenChange={setLoginOpen} />
             {/* <LoginModal open={loginOpen} onOpenChange={setLoginOpen} /> */}
 
             <AlertDialog open={showLogoutConfirm} onOpenChange={setShowLogoutConfirm}>
