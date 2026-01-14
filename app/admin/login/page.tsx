@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Lock } from "lucide-react"
 
 export default function AdminLogin() {
+    const [username, setUsername] = useState("")
     const [password, setPassword] = useState("")
     const [error, setError] = useState("")
     const [loading, setLoading] = useState(false)
@@ -24,14 +25,14 @@ export default function AdminLogin() {
             const res = await fetch("/api/auth/login", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ password }),
+                body: JSON.stringify({ username, password }),
             })
 
             if (res.ok) {
                 router.push("/admin")
                 router.refresh()
             } else {
-                setError("密码错误")
+                setError("用户名或密码错误")
             }
         } catch (err) {
             setError("登录失败，请重试")
@@ -49,11 +50,22 @@ export default function AdminLogin() {
                     </div>
                     <CardTitle className="text-2xl">管理员登录</CardTitle>
                     <CardDescription className="text-zinc-400">
-                        请输入管理员密码以继续
+                        请输入管理员账号和密码以继续
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
                     <form onSubmit={handleLogin} className="space-y-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="username">账号</Label>
+                            <Input
+                                id="username"
+                                type="text"
+                                value={username}
+                                onChange={(e) => setUsername(e.target.value)}
+                                className="bg-zinc-950 border-zinc-800 text-white focus-visible:ring-zinc-700"
+                                placeholder="admin"
+                            />
+                        </div>
                         <div className="space-y-2">
                             <Label htmlFor="password">密码</Label>
                             <Input
