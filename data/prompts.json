@@ -1,0 +1,298 @@
+[
+  {
+    "title": "幂幂的秘密",
+    "description": "幂幂的秘密",
+    "content": "{\n  \"prompt_description\": \"Luxury Satellite Body Chain Harness Portrait\",\n  \"subject\": {\n    \"type\": \"Female model\",\n    \"description\": \"Young Asian woman, early 20s, beautiful and alluring face, soft skin texture, Large breasts.\",\n    \"hair\": \"voluminous pink hair\",\n    \"makeup\": \"Glamorous K-pop idol style makeup, defined eyeliner, soft blush, glossy lips, contact lenses\",\n    \"notes\": \"Maintain the subject’s exact facial features, structure, skin tone, and identity from the uploaded image.\",\n    \"eyes\": {\n      \"look\": \"sharp fox-eyes, piercing gaze directed at camera\",\n      \"energy\": \"confident, slightly cold, seductive\",\n      \"details\": \"defined eyeliner, emphasized aegyosal\"\n    },\n    \"mouth\": {\n      \"position\": \"relaxed lips, subtle smirk\",\n      \"energy\": \"chic\"\n    },\n    \"overall\": \"stunning, high-visual-impact beauty\"\n  },\n  \"aspect_ratio\": \"3:4\",\n  \"attributes\": [\n    \"elegant\",\n    \"prominent chest silhouette\",\n    \"smooth skin\",\n    \"Seductive, confident, mouth slightly open, direct intense eye contact\",\n    \"elegant and seductive pose\",\n    \"graceful body language\",\n    \"alluring and glamorous posture\",\n    \"slightly arched back for sensual curve\"\n  ],\n  \"pose\": {\n    \"overall_style\": \"Elegant yet highly seductive and glamorous pose, combining sophistication with intense sensuality and alluring vampishness\",\n    \"body_position\": \"Slight three-quarter turn to camera, subtle S-curve body line with gently arched back and one hip slightly pushed out, shoulders relaxed but one shoulder subtly raised for asymmetry\",\n    \"head_and_gaze\": \"Head slightly tilted downward with chin gently tucked, creating mysterious allure, while maintaining piercing direct eye contact with camera\",\n    \"arms_and_hands\": [\n      \"One hand delicately tracing fingertips along collarbone or lightly touching the central Y-drop chain at chest level, drawing attention to jewelry and cleavage\",\n      \"Other hand gracefully resting on hip or lightly draped along side of body, fingers relaxed and elegant\"\n    ],\n    \"torso_and_chest\": \"Subtle forward lean of upper body to accentuate chest silhouette and jewelry drape, creating sensual tension without exaggeration\",\n    \"expression_integration\": \"Pose enhances confident, slightly cold, seductive energy – body language that feels both regal and temptingly provocative\"\n  },\n  \"jewelry_details\": {\n    \"core_item\": \"Intricate multi-layered body chain harness\",\n    \"metal_type\": \"Fine silver chain, with a high-polish finish\",\n    \"chain_texture\": \"CRITICAL DETAIL: Satellite chain style (delicate cable chain interspersed with small metal beads periodically), creating a shimmering, dotted texture across the skin\",\n    \"structural_elements\": [\n      \"Choker-style neck layered chains\",\n      \"Draped chains cascading over shoulders (epaulet effect)\",\n      \"Central vertical 'Y-drop' chain with crystal accents descending into cleavage\",\n      \"CRITICAL STRUCTURE: Distinctive curved chains swooping from side ribs, under the bust, and converging at a central sparkling rhinestone point below the breasts, creating a cage/cupping visual frame\"\n    ],\n    \"accents\": [\n      \"Sparkling clear zircon crystals at junction points\",\n      \"Rhombus or star-shaped central chest crystal\"\n    ],\n    \"visual_effect\": \"Highly reflective, fluid drape, looking expensive and delicate\"\n  },\n  \"attire\": {\n    \"type\": \"Deep-V structured corset or tailored evening top\",\n    \"color\": \"Beige nude lace halter-neck bodysuit, sheer floral lace details, seductive style (to contrast sharply with the silver jewelry)\",\n    \"fabric\": \"Matte or slight sheen fabric that allows the jewelry to stand out\"\n  },\n  \"lighting_and_atmosphere\": {\n    \"style\": \"High-end commercial photography lighting\",\n    \"Key_light\": \"Focused, dramatic lighting highlighting the chest area, causing the metal beads and crystals to sparkle intensely (specular highlights)\",\n    \"mood\": \"Luxurious, glamorous, sophisticated\"\n  },\n  \"composition\": {\n    \"framing\": \"Three-quarter upper body portrait, full head to waist completely visible in frame, entire upper body and shoulders fully included, no cropping anywhere on head, hair, torso, or arms, from top of voluminous hair to mid-torso or waist, centered composition with ample headroom and space, magazine cover style, Complete character construction, magazine-quality composition.\",\n    \"focus\": \"Sharp focus on face, eyes, and jewelry details across the entire upper body from chest to clavicle\",\n    \"background\": \"Blurred, dark, luxurious interior giving a sense of depth without distraction\"\n  },\n  \"quality_modifiers\": [\n    \"full upper body in frame\",\n    \"complete head to waist visible\",\n    \"no cropping of body or torso\",\n    \"entire figure from head to mid-torso\",\n    \"full head in frame\",\n    \"complete visible head and hair\",\n    \"no cropped head\",\n    \"head not cut off\",\n    \"8k resolution\",\n    \"hyper-realistic jewelry texture\",\n    \"cinematic shot\",\n    \"masterpiece\",\n    \"highly detailed\"\n  ],\n  \"negative_prompt\": [\n    \"round face\",\n    \"plain face\",\n    \"no makeup\",\n    \"warm yellow skin\",\n    \"chunky knit\",\n    \"thick sweater\",\n    \"loose clothing\",\n    \"wrinkled fabric\",\n    \"dull eyes\",\n    \"friendly boring smile\",\n    \"low resolution\",\n    \"dark lighting\",\n    \"text\",\n    \"watermark\",\n    \"door number\",\n    \"distorted hands\",\n    \"bad anatomy\",\n    \"overexposed\",\n    \"illustration\",\n    \"painting\",\n    \"cropped head\",\n    \"head cut off\",\n    \"top of head missing\",\n    \"head out of frame\",\n    \"partial head\",\n    \"forehead cropped\",\n    \"cropped torso\",\n    \"cropped body\",\n    \"partial upper body\",\n    \"body cut off\",\n    \"torso out of frame\",\n    \"shoulders cropped\",\n    \"waist cropped\",\n    \"stiff pose\",\n    \"awkward posture\",\n    \"rigid arms\",\n    \"unnatural hand position\"\n  ]\n}",
+    "categoryId": "photography",
+    "imageUrl": "/uploads/1768334487228-GeminiGeneratedImage6kfo636kfo636kfo.png",
+    "tags": [
+      "portrait",
+      "minimalist",
+      "cinematic"
+    ],
+    "metadata": {
+      "model": "Midjourney v6",
+      "aspectRatio": "2:3"
+    },
+    "status": "published",
+    "id": "1768334537790",
+    "createdAt": "2026-01-13T20:02:17.790Z",
+    "updatedAt": "2026-01-13T20:02:17.790Z",
+    "views": 0,
+    "copies": 0,
+    "likes": 0
+  },
+  {
+    "title": "刘亦菲的照相馆",
+    "description": "刘亦菲的照相馆",
+    "content": "{\n  \"prompt_type\": \"High-Fashion Editorial Photograph, Studio Set\",\n  \"subject_details\": {\n    \"character_image\": {\n      \"description\": \"Young women, Korean idol girls with hourglass figures and elegant features, are now in a dramatic studio setting.\",\n      \"hair\": \"Long blonde balayage hair, strictly matching the exact color, style, length, and texture from the uploaded reference image., catching the rim light.\",\n      \"makeup\": \"Radiant red carpet makeup, defined features, warm highlights on cheekbones.\",\n      \"accessories\": \"Sparkling dangle earrings.\"\n    },\n    \"action_and_pose\": {\n      \"pose\": \"A dynamic, captured-in-motion pose with high tension, emphasizing a sultry and alluring quality. The pose should be random and non-static. Examples include: a dramatic, leaning pose against a stack of flight cases with a hand running through her hair; a mid-movement twist looking back over her shoulder, her body forming an S-curve; or a high-fashion crouch with one leg extended, exuding confidence and sensuality. Her hands are posed expressively, adding to the dynamic feel.\",\n      \"expression\": \"A complex mix of aloofness, playful arrogance, and innocent allure (pure desire). Eyes half-closed or gazing intently, lips slightly parted or in a subtle smirk.\",\n      \"notes\": \"Maintain the subject’s exact facial features, structure, skin tone, and identity from the uploaded image.\",\n      \"clothing_details\": {\n        \"type\": \"Haute Couture Evening Gown, mermaid silhouette, floor-length.\",\n        \"color\": \"Champagne gold with metallic gold embellishments, catching the warm light dramatically.\",\n        \"neckline_and_bodice\": \"Off-the-shoulder, deep sweetheart illusion neckline. Corset bodice with baroque crystal embroidery and a jeweled chandelier pattern.\",\n        \"skirt_and_texture\": \"Ruched hips, covered in high-gloss gold sequins, rhinestones, and metallic threads, creating intense sparkling highlights under the studio lights.\"\n      }\n    }\n  },\n  \"environment_context\": {\n    \"setting\": \"Active professional photography studio/soundstage.\",\n    \"foreground\": \"Various professional flight cases and equipment trunks stacked or placed on the floor, There was an Film projectors set up.\",\n    \"background\": \"Dark, atmospheric studio haze. Silhouettes of professional lighting equipment, stands, a large fan, and more flight cases.\",\n    \"atmosphere\": \"Moody, dramatic, high-contrast, smoky, mysterious.\"\n  },\n  \"photographic_style\": {\n    \"style\": \"Cinematic, low-key fashion photography.\",\n    \"lighting\": \"Dramatic backlighting and rim lighting from warm tungsten studio lights (Fresnels). Creates a strong halo effect around the subject and highlights the texture of the gown and smoke. Deep shadows across the front.\",\n    \"color_palette\": \"Warm golden and orange tones from the lights contrasted with deep blacks and shadows.\",\n    \"composition\": \"Full-body or three-quarter shot, capturing the subject's dynamic pose amidst the studio gear.\"\n  }\nar 2:3\n}",
+    "categoryId": "photography",
+    "imageUrl": "/uploads/1768334406171-1768300980720download.jpg",
+    "tags": [],
+    "metadata": {
+      "model": "Nano",
+      "aspectRatio": "2:3"
+    },
+    "status": "published",
+    "id": "1768334456107",
+    "createdAt": "2026-01-13T20:00:56.107Z",
+    "updatedAt": "2026-01-13T20:00:56.107Z",
+    "views": 0,
+    "copies": 0,
+    "likes": 0
+  },
+  {
+    "id": "1",
+    "title": "Urban Fisheye Flash Contrast Portrait",
+    "description": "都市鱼眼闪光对比肖像",
+    "content": "A striking urban portrait taken with a fisheye lens, dramatic flash lighting creating high contrast shadows, street photography style, modern fashion aesthetic, vibrant city background, dynamic composition",
+    "categoryId": "photography",
+    "imageUrl": "/urban-fisheye-flash-portrait.jpg",
+    "tags": [
+      "portrait",
+      "cinematic",
+      "fashion"
+    ],
+    "metadata": {
+      "model": "Midjourney v6",
+      "aspectRatio": "1:1"
+    },
+    "createdAt": "2026-01-10T00:00:00.000Z",
+    "status": "published",
+    "updatedAt": "1970-01-01T00:00:00.000Z"
+  },
+  {
+    "id": "2",
+    "title": "Pure White 3D Monthly Icons",
+    "content": "12 minimalist 3D icons representing each month of the year, pure white design with soft shadows, clean aesthetic, modern UI design, floating composition, monochromatic palette",
+    "description": "纯白 3D 月份图标",
+    "imageUrl": "/3d-white-monthly-icons.jpg",
+    "categoryId": "3d",
+    "tags": [
+      "minimalist",
+      "3d",
+      "design"
+    ],
+    "metadata": {
+      "model": "DALL-E 3",
+      "aspectRatio": "1:1"
+    },
+    "status": "published",
+    "views": 1890,
+    "copies": 189,
+    "likes": 421,
+    "createdAt": "2026-01-09T00:00:00.000Z",
+    "updatedAt": "2026-01-12T00:00:00.000Z",
+    "publishedAt": "2026-01-09T00:00:00.000Z"
+  },
+  {
+    "id": "3",
+    "title": "Melancholic White Frame Editorial",
+    "description": "忧郁白框编辑肖像",
+    "content": "Editorial fashion photography with melancholic mood, subject framed by white architectural elements, soft natural window lighting, muted color palette, artistic portrait, contemplative expression",
+    "categoryId": "photography",
+    "imageUrl": "/melancholic-editorial-portrait.jpg",
+    "tags": [
+      "portrait",
+      "editorial",
+      "minimalist"
+    ],
+    "metadata": {
+      "model": "Midjourney v6",
+      "aspectRatio": "1:1"
+    },
+    "createdAt": "2026-01-08T00:00:00.000Z",
+    "status": "published",
+    "updatedAt": "1970-01-01T00:00:00.000Z"
+  },
+  {
+    "id": "4",
+    "title": "Real-Cartoon Street Portrait",
+    "content": "Hybrid style portrait seamlessly blending photorealistic features with cartoon elements, vibrant street background with graffiti, playful artistic expression, bold colors, creative digital art",
+    "description": "真实卡通街头肖像",
+    "imageUrl": "/real-cartoon-street-portrait.jpg",
+    "categoryId": "ai-art",
+    "tags": [
+      "portrait",
+      "vibrant",
+      "artistic"
+    ],
+    "metadata": {
+      "model": "Stable Diffusion XL",
+      "aspectRatio": "2:3"
+    },
+    "status": "published",
+    "views": 3120,
+    "copies": 312,
+    "likes": 678,
+    "createdAt": "2026-01-11T00:00:00.000Z",
+    "updatedAt": "2026-01-13T00:00:00.000Z",
+    "publishedAt": "2026-01-11T00:00:00.000Z"
+  },
+  {
+    "id": "5",
+    "title": "Seagull Freedom Portrait",
+    "content": "Cinematic portrait with seagull in flight above subject, freedom and liberation concept, golden hour lighting, coastal setting with ocean backdrop, emotional depth, wide angle composition",
+    "description": "海鸥自由肖像",
+    "imageUrl": "/seagull-freedom-portrait.jpg",
+    "categoryId": "photography",
+    "tags": [
+      "portrait",
+      "cinematic",
+      "outdoor"
+    ],
+    "metadata": {
+      "model": "Midjourney v6",
+      "aspectRatio": "16:9"
+    },
+    "status": "published",
+    "views": 5670,
+    "copies": 567,
+    "likes": 1243,
+    "createdAt": "2026-01-07T00:00:00.000Z",
+    "updatedAt": "2026-01-13T00:00:00.000Z",
+    "publishedAt": "2026-01-07T00:00:00.000Z"
+  },
+  {
+    "id": "6",
+    "title": "Underwater Macro Half-Face Close-up",
+    "description": "水下微距半脸特写",
+    "content": "Extreme macro underwater photography, half-face composition with water surface splitting the frame, crystal clear water with visible bubbles, dreamy bokeh background, surreal aesthetic, refreshing mood",
+    "categoryId": "photography",
+    "imageUrl": "/underwater-macro-closeup.jpg",
+    "tags": [
+      "macro",
+      "closeup",
+      "artistic",
+      "摄影"
+    ],
+    "metadata": {
+      "model": "Midjourney v6",
+      "aspectRatio": "1:1"
+    },
+    "createdAt": "2026-01-12T00:00:00.000Z",
+    "status": "published",
+    "updatedAt": "1970-01-01T00:00:00.000Z"
+  },
+  {
+    "id": "7",
+    "title": "Luxurious Triptych Fashion Portrait",
+    "content": "High-end fashion triptych showing three complementary poses, luxurious styling with designer clothing, professional studio lighting setup, three-panel composition, magazine editorial quality, elegant and sophisticated",
+    "description": "奢华三联时尚肖像",
+    "imageUrl": "/luxury-fashion-portrait.png",
+    "categoryId": "photography",
+    "tags": [
+      "fashion",
+      "editorial",
+      "studio"
+    ],
+    "metadata": {
+      "model": "Midjourney v6",
+      "aspectRatio": "3:1"
+    },
+    "status": "published",
+    "views": 4450,
+    "copies": 445,
+    "likes": 967,
+    "createdAt": "2026-01-06T00:00:00.000Z",
+    "updatedAt": "2026-01-13T00:00:00.000Z",
+    "publishedAt": "2026-01-06T00:00:00.000Z"
+  },
+  {
+    "id": "8",
+    "title": "Photorealistic Supermodel Walk in the Rain",
+    "content": "Photorealistic runway walk in pouring rain, model in haute couture, dramatic lighting with reflective wet surfaces, high fashion photography aesthetic, cinematic atmosphere, water droplets in motion",
+    "description": "超模雨中行走",
+    "imageUrl": "/supermodel-rain-walk.jpg",
+    "categoryId": "photography",
+    "tags": [
+      "fashion",
+      "cinematic",
+      "realistic"
+    ],
+    "metadata": {
+      "model": "Midjourney v6",
+      "aspectRatio": "2:3",
+      "style": "raw"
+    },
+    "status": "published",
+    "views": 6780,
+    "copies": 678,
+    "likes": 1456,
+    "createdAt": "2026-01-05T00:00:00.000Z",
+    "updatedAt": "2026-01-13T00:00:00.000Z",
+    "publishedAt": "2026-01-05T00:00:00.000Z"
+  },
+  {
+    "id": "10",
+    "title": "Fitness Innocent-Sexy Photos",
+    "content": "Athletic fitness photography showcasing natural beauty, energetic and confident pose, clean aesthetic with professional lighting, studio setting with minimal props, healthy and positive vibe",
+    "description": "健身清新性感照片",
+    "imageUrl": "/fitness-portrait.jpg",
+    "categoryId": "photography",
+    "tags": [
+      "portrait",
+      "studio",
+      "vibrant"
+    ],
+    "metadata": {
+      "model": "Midjourney v6",
+      "aspectRatio": "2:3"
+    },
+    "status": "published",
+    "views": 5120,
+    "copies": 512,
+    "likes": 1089,
+    "createdAt": "2026-01-04T00:00:00.000Z",
+    "updatedAt": "2026-01-13T00:00:00.000Z",
+    "publishedAt": "2026-01-04T00:00:00.000Z"
+  },
+  {
+    "id": "11",
+    "title": "Ultra-realistic 3D Isometric View",
+    "content": "3D isometric architectural visualization with ultra-realistic rendering, detailed textures and materials, modern design with clean lines, perfect lighting and shadows, professional architectural presentation",
+    "description": "超写实 3D 等距视图",
+    "imageUrl": "/3d-isometric-architecture.jpg",
+    "categoryId": "3d",
+    "tags": [
+      "3d",
+      "realistic",
+      "minimalist"
+    ],
+    "metadata": {
+      "model": "Blender + AI Enhancement",
+      "aspectRatio": "1:1"
+    },
+    "status": "published",
+    "views": 3890,
+    "copies": 389,
+    "likes": 823,
+    "createdAt": "2026-01-03T00:00:00.000Z",
+    "updatedAt": "2026-01-12T00:00:00.000Z",
+    "publishedAt": "2026-01-03T00:00:00.000Z"
+  },
+  {
+    "id": "12",
+    "title": "3x3 Grid Photo Collage",
+    "content": "Creative 3x3 photo grid collage with cohesive color palette, storytelling composition showing different moments and angles, editorial style presentation, harmonious visual flow between images",
+    "description": "3x3 网格照片拼贴",
+    "imageUrl": "/photo-collage-grid.jpg",
+    "categoryId": "illustration",
+    "tags": [
+      "editorial",
+      "artistic",
+      "vibrant"
+    ],
+    "metadata": {
+      "model": "Photoshop + Midjourney",
+      "aspectRatio": "1:1"
+    },
+    "status": "published",
+    "views": 2670,
+    "copies": 267,
+    "likes": 589,
+    "createdAt": "2026-01-02T00:00:00.000Z",
+    "updatedAt": "2026-01-11T00:00:00.000Z",
+    "publishedAt": "2026-01-02T00:00:00.000Z"
+  }
+]

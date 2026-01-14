@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  nano-gallery:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nano-gallery
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - ADMIN_USER=${ADMIN_USER:-admin}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-changeme}
+    volumes:
+      # 挂载数据目录（JSON数据库文件）
+      - ./data:/app/data
+      # 挂载图片上传目录
+      - ./uploads:/app/public/uploads
+    networks:
+      - nano-network
+
+networks:
+  nano-network:
+    driver: bridge
