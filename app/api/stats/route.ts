@@ -99,7 +99,31 @@ export async function GET(request: Request) {
                     incrementStat(promptId, 'views'),
                     recordEvent(promptId, 'view', 'anon')
                 ])
+                // Parallel record
+                await Promise.all([
+                    incrementStat(promptId, 'views'),
+                    recordEvent(promptId, 'view', 'anon')
+                ])
                 console.log(`[Stats API] View recorded for ${promptId}`)
+
+                // DEBUG: Check file system visibility
+                try {
+                    const fs = require('fs');
+                    const path = require('path');
+                    const uploadDir = path.join(process.cwd(), 'public/uploads');
+                    console.log(`[Debug FS] CWD: ${process.cwd()}`);
+                    console.log(`[Debug FS] Checking dir: ${uploadDir}`);
+                    if (fs.existsSync(uploadDir)) {
+                        const files = fs.readdirSync(uploadDir);
+                        console.log(`[Debug FS] Files in uploads (${files.length}):`, files.slice(0, 5));
+                    } else {
+                        console.log('[Debug FS] public/uploads directory NOT FOUND');
+                        // Try listing current dir
+                        console.log('[Debug FS] Root files:', fs.readdirSync(process.cwd()));
+                    }
+                } catch (e) {
+                    console.error('[Debug FS] Error checking FS:', e);
+                }
             } else {
                 console.log(`[Stats API] View skipped (cooldown) for ${promptId}`)
             }
