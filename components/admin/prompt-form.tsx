@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { categories } from "@/lib/mock-data"
 import { SimpleTagInput } from "@/components/ui/simple-tag-input"
 import { Prompt } from "@/lib/types"
+import { getImageUrl } from "@/lib/utils"
 
 interface PromptFormProps {
     initialData?: Partial<Prompt>
@@ -111,7 +112,7 @@ export function PromptForm({ initialData, isEditing = false }: PromptFormProps) 
                     {imageUrl ? (
                         <>
                             <Image
-                                src={imageUrl}
+                                src={getImageUrl(imageUrl)}
                                 alt="Preview"
                                 fill
                                 className="object-contain p-2"
