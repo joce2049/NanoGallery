@@ -172,8 +172,9 @@ export function sortPrompts(prompts: Prompt[], sortBy: SortBy): Prompt[] {
                     if (!d) return 0
                     return new Date(d).getTime()
                 }
-                const dateA = getDate(a.publishedAt || a.createdAt)
-                const dateB = getDate(b.publishedAt || b.createdAt)
+                // Use updatedAt (latest modification) as primary, fallback to createdAt
+                const dateA = getDate(a.updatedAt || a.createdAt)
+                const dateB = getDate(b.updatedAt || b.createdAt)
                 return dateB - dateA
             })
             break

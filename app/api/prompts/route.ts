@@ -16,8 +16,12 @@ export async function GET(request: Request) {
     }
 
     const prompts = await JSONFileDB.getAllPrompts();
-    // Sort by createdAt desc
-    prompts.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    // Sort by updatedAt desc (latest modified or created first)
+    prompts.sort((a, b) => {
+        const dateA = new Date(a.updatedAt || a.createdAt).getTime();
+        const dateB = new Date(b.updatedAt || b.createdAt).getTime();
+        return dateB - dateA;
+    });
     return NextResponse.json(prompts);
 }
 
