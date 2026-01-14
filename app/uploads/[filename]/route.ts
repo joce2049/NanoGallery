@@ -14,6 +14,7 @@ export async function GET(
         const sanitizedFilename = path.basename(filename);
 
         const filePath = path.join(process.cwd(), "public/uploads", sanitizedFilename);
+        console.log(`[ImageFallback] Request: ${filename}, Path: ${filePath}`);
 
         const fileBuffer = await readFile(filePath);
 

@@ -41,6 +41,10 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
+# Install tzdata for runtime
+RUN apk add --no-cache tzdata
+ENV TZ=Asia/Shanghai
+
 # Copy built application
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
