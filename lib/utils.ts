@@ -50,3 +50,18 @@ export async function copyToClipboard(text: string): Promise<boolean> {
     return false
   }
 }
+
+// Helper to get image URL (forces proxy for local uploads)
+// This bypasses static file serving issues in Docker/Standalone
+export function getImageUrl(src: string | undefined | null): string {
+  if (!src) return "/placeholder.svg"
+
+  // If it's a local upload, force it through our proxy API
+  // The rewrite in next.config.mjs might fail in some docker setups
+  // so we change the URL explicitly on the client.
+  if (src.startsWith('/uploads/')) {
+    return src.replace('/uploads/', '/api/image-proxy/')
+  }
+
+  return src
+}

@@ -120,7 +120,7 @@ export function ImageModal({ prompt, open, onOpenChange, onSelectPrompt }: Image
                         {/* Ambient Background Blur */}
                         <div className="absolute inset-0 z-0 overflow-hidden">
                             <Image
-                                src={prompt.imageUrl || "/placeholder.svg"}
+                                src={getImageUrl(prompt.imageUrl) || "/placeholder.svg"}
                                 alt=""
                                 fill
                                 className="object-cover blur-3xl opacity-20 scale-110"
@@ -130,7 +130,7 @@ export function ImageModal({ prompt, open, onOpenChange, onSelectPrompt }: Image
 
                         <div className="relative w-full h-full flex items-center justify-center z-10">
                             <Image
-                                src={prompt.imageUrl || "/placeholder.svg"}
+                                src={getImageUrl(prompt.imageUrl) || "/placeholder.svg"}
                                 alt={prompt.title}
                                 fill
                                 className="object-contain shadow-2xl drop-shadow-2xl"

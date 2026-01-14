@@ -3,6 +3,7 @@
 import Image from "next/image"
 import { Card } from "@/components/ui/card"
 import type { Prompt } from "@/lib/types"
+import { getImageUrl } from "@/lib/utils"
 
 interface ImageCardProps {
   prompt: Prompt
@@ -17,7 +18,7 @@ export function ImageCard({ prompt, onCardClick }: ImageCardProps) {
     >
       <div className="relative">
         <Image
-          src={prompt.imageUrl || "/placeholder.svg"}
+          src={getImageUrl(prompt.imageUrl)}
           alt={prompt.title}
           width={0}
           height={0}

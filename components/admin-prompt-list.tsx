@@ -6,6 +6,7 @@ import Image from "next/image"
 import { Eye, Copy, Heart, Image as ImageIcon, Edit, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Prompt } from "@/lib/types"
+import { getImageUrl } from "@/lib/utils"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 
@@ -81,7 +82,7 @@ export function AdminPromptList({ initialPrompts }: AdminPromptListProps) {
                         {/* Thumbnail */}
                         <div className="relative w-16 h-16 rounded-md overflow-hidden bg-muted shrink-0">
                             <Image
-                                src={prompt.imageUrl || "/placeholder.svg"}
+                                src={getImageUrl(prompt.imageUrl)}
                                 alt={prompt.title}
                                 fill
                                 className="object-cover"
