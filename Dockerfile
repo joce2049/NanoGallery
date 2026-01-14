@@ -41,13 +41,14 @@ RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
 # Copy built application
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 # Create directories for mounted volumes
-RUN mkdir -p /app/data /app/uploads && \
-    chown -R nextjs:nodejs /app/data /app/uploads
+# Ensure public/uploads exists and is writable
+RUN mkdir -p /app/data /app/public/uploads && \
+    chown -R nextjs:nodejs /app/data /app/public/uploads
 
 USER nextjs
 
