@@ -22,6 +22,13 @@ export async function GET(request: Request) {
         const dateB = new Date(b.updatedAt || b.createdAt).getTime();
         return dateB - dateA;
     });
+
+    // Debug logging
+    console.log('[Admin API] Sorted prompts:');
+    prompts.slice(0, 5).forEach((p, i) => {
+        console.log(`  ${i + 1}. ID:${p.id} Title:"${p.title?.substring(0, 20)}" UpdatedAt:${p.updatedAt} CreatedAt:${p.createdAt}`);
+    });
+
     return NextResponse.json(prompts);
 }
 
