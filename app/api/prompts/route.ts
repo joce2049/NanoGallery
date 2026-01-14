@@ -62,13 +62,20 @@ export async function PUT(request: Request) {
             return NextResponse.json({ error: "ID required" }, { status: 400 });
         }
 
-        // Ensure dates are parsed
-        if (body.createdAt) body.createdAt = new Date(body.createdAt);
-        if (body.updatedAt) body.updatedAt = new Date(); // Update modified time
-        if (body.publishedAt) body.publishedAt = new Date(body.publishedAt);
+        // Fetch existing prompt to preserve createdAt
+        const prompts = await JSONFileDB.getAllPrompts();
+        const existing = prompts.find(p => p.id === body.id);
 
-        await JSONFileDB.savePrompt(body);
-        return NextResponse.json(body);
+        // Preserve original createdAt, update updatedAt
+        const updatedPrompt = {
+            ...body,
+            createdAt: existing?.createdAt || new Date(body.createdAt || Date.now()),
+            updatedAt: new Date(),
+            publishedAt: body.publishedAt ? new Date(body.publishedAt) : existing?.publishedAt
+        };
+
+        await JSONFileDB.savePrompt(updatedPrompt);
+        return NextResponse.json(updatedPrompt);
     } catch (e) {
         return NextResponse.json({ error: "Update failed" }, { status: 500 });
     }
