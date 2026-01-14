@@ -10,7 +10,7 @@ import { getPromptTags, getRelatedPrompts, recordCopy, recordLike } from "@/lib/
 import { TagList } from "@/components/tag-badge"
 import { StatsBadge } from "@/components/stats-badge"
 import { ImageCard } from "@/components/image-card"
-import { copyToClipboard } from "@/lib/utils"
+import { copyToClipboard, getImageUrl } from "@/lib/utils"
 
 interface ImageModalProps {
     prompt: Prompt | null
