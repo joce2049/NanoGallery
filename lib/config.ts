@@ -152,6 +152,20 @@ export const tags: Tag[] = [
     { id: "neon", name: "霓虹", slug: "neon", color: "#FF006E" },
     { id: "monochrome", name: "单色", slug: "monochrome", color: "#495057" },
     { id: "pastel", name: "粉彩", slug: "pastel", color: "#FFD6FF" },
+    { id: "street", name: "街拍", slug: "street", color: "#FF6347" },
+    { id: "japanese", name: "日系", slug: "japanese", color: "#FFB6C1" },
+    { id: "korean", name: "韩系", slug: "korean", color: "#FFA07A" },
+    { id: "western", name: "欧美", slug: "western", color: "#CD853F" },
+    { id: "tech", name: "科技", slug: "tech", color: "#00CED1\" },
+    { id: "scifi", name: "科幻", slug: "scifi", color: "#1E90FF" },
+    { id: "blackwhite", name: "黑白", slug: "blackwhite", color: "#808080" },
+    { id: "dreamy", name: "梦幻", slug: "dreamy", color: "#DDA0DD" },
+    { id: "punk", name: "朋克", slug: "punk", color: "#DC143C" },
+    { id: "vaporwave", name: "蒸汽波", slug: "vaporwave", color: "#FF1493" },
+    { id: "kawaii", name: "可爱", slug: "kawaii", color: "#FFB6D9" },
+    { id: "elegant", name: "优雅", slug: "elegant", color: "#C8A2C8\" },
+    { id: "dramatic", name: "戏剧性", slug: "dramatic", color: "#8B0000" },
+    { id: "soft", name: "柔和", slug: "soft", color: "#F5DEB3" },
 ]
 
 /**
@@ -159,6 +173,7 @@ export const tags: Tag[] = [
  * 可以在这里添加、删除或修改支持的 AI 模型
  */
 export const aiModels = [
+    { id: "nano-banana", name: "Nano Banana", provider: "Nano" },
     { id: "midjourney-v6", name: "Midjourney v6", provider: "Midjourney" },
     { id: "midjourney-v7", name: "Midjourney v7", provider: "Midjourney" },
     { id: "midjourney-niji-6", name: "Midjourney Niji 6", provider: "Midjourney" },
@@ -182,7 +197,6 @@ export const aiModels = [
     { id: "playground-v2.5", name: "Playground v2.5", provider: "Playground AI" },
     { id: "ideogram-2", name: "Ideogram 2.0", provider: "Ideogram" },
     { id: "ideogram-1", name: "Ideogram 1.0", provider: "Ideogram" },
-    { id: "nano-banana", name: "Nano Banana", provider: "Nano" },
     { id: "other", name: "其他", provider: "Other" },
 ] as const
 
@@ -191,13 +205,15 @@ export const aiModels = [
  * 这些是最常用的标签，会在输入时作为建议显示
  */
 export const popularTagSuggestions = [
-    "portrait", "landscape", "minimalist", "cinematic", "vibrant",
-    "dark", "fantasy", "realistic", "abstract", "retro",
-    "futuristic", "studio", "outdoor", "closeup", "macro",
-    "fashion", "editorial", "artistic", "cyberpunk", "anime",
-    "watercolor", "sketch", "neon", "monochrome", "pastel",
+    "portrait", "landscape", "minimalist", "cinematic", "street",
+    "japanese", "korean", "tech", "scifi", "cyberpunk",
+    "anime", "vibrant", "dark", "fantasy", "realistic",
+    "abstract", "retro", "futuristic", "dreamy", "elegant",
+    "fashion", "editorial", "artistic", "watercolor", "sketch",
+    "neon", "monochrome", "pastel", "kawaii", "dramatic",
     "nature", "urban", "vintage", "modern", "classic",
 ]
+
 
 
 /**
