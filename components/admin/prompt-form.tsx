@@ -14,6 +14,7 @@ import { categories } from "@/lib/mock-data"
 import { SimpleTagInput } from "@/components/ui/simple-tag-input"
 import { Prompt } from "@/lib/types"
 import { getImageUrl } from "@/lib/utils"
+import { aiModels } from "@/lib/config"
 
 interface PromptFormProps {
     initialData?: Partial<Prompt>
@@ -156,11 +157,18 @@ export function PromptForm({ initialData, isEditing = false }: PromptFormProps) 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label>模型</Label>
-                            <Input
-                                value={model}
-                                onChange={e => setModel(e.target.value)}
-                                className="bg-background"
-                            />
+                            <Select value={model} onValueChange={setModel}>
+                                <SelectTrigger className="bg-background">
+                                    <SelectValue placeholder="选择 AI 模型" />
+                                </SelectTrigger>
+                                <SelectContent className="max-h-[300px]">
+                                    {aiModels.map(m => (
+                                        <SelectItem key={m.id} value={m.name}>
+                                            {m.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                         <div className="space-y-2">
                             <Label>比例</Label>

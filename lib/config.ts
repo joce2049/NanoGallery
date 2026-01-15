@@ -145,7 +145,60 @@ export const tags: Tag[] = [
     { id: "fashion", name: "时尚", slug: "fashion", color: "#E17055" },
     { id: "editorial", name: "编辑", slug: "editorial", color: "#B2BEC3" },
     { id: "artistic", name: "艺术", slug: "artistic", color: "#DFE6E9" },
+    { id: "cyberpunk", name: "赛博朋克", slug: "cyberpunk", color: "#FF006E" },
+    { id: "anime", name: "动漫", slug: "anime", color: "#FB5607" },
+    { id: "watercolor", name: "水彩", slug: "watercolor", color: "#8ECAE6" },
+    { id: "sketch", name: "素描", slug: "sketch", color: "#023047" },
+    { id: "neon", name: "霓虹", slug: "neon", color: "#FF006E" },
+    { id: "monochrome", name: "单色", slug: "monochrome", color: "#495057" },
+    { id: "pastel", name: "粉彩", slug: "pastel", color: "#FFD6FF" },
 ]
+
+/**
+ * AI 图像生成模型配置
+ * 可以在这里添加、删除或修改支持的 AI 模型
+ */
+export const aiModels = [
+    { id: "midjourney-v6", name: "Midjourney v6", provider: "Midjourney" },
+    { id: "midjourney-v7", name: "Midjourney v7", provider: "Midjourney" },
+    { id: "midjourney-niji-6", name: "Midjourney Niji 6", provider: "Midjourney" },
+    { id: "dalle-3", name: "DALL-E 3", provider: "OpenAI" },
+    { id: "dalle-2", name: "DALL-E 2", provider: "OpenAI" },
+    { id: "gpt-image-1.5", name: "GPT Image 1.5", provider: "OpenAI" },
+    { id: "flux-pro", name: "Flux Pro", provider: "Black Forest Labs" },
+    { id: "flux-dev", name: "Flux Dev", provider: "Black Forest Labs" },
+    { id: "flux-schnell", name: "Flux Schnell", provider: "Black Forest Labs" },
+    { id: "stable-diffusion-xl", name: "Stable Diffusion XL", provider: "Stability AI" },
+    { id: "stable-diffusion-3", name: "Stable Diffusion 3", provider: "Stability AI" },
+    { id: "qwen-image", name: "Qwen Image", provider: "Alibaba" },
+    { id: "tongyi-wanxiang", name: "通义万相", provider: "Alibaba" },
+    { id: "seedream", name: "Seedream", provider: "ByteDance" },
+    { id: "adobe-firefly-3", name: "Adobe Firefly 3", provider: "Adobe" },
+    { id: "adobe-firefly-2", name: "Adobe Firefly 2", provider: "Adobe" },
+    { id: "canva-ai", name: "Canva AI", provider: "Canva" },
+    { id: "recraft-v3", name: "Recraft V3", provider: "Recraft" },
+    { id: "recraft-v2", name: "Recraft V2", provider: "Recraft" },
+    { id: "leonardo-ai", name: "Leonardo AI", provider: "Leonardo.ai" },
+    { id: "playground-v2.5", name: "Playground v2.5", provider: "Playground AI" },
+    { id: "ideogram-2", name: "Ideogram 2.0", provider: "Ideogram" },
+    { id: "ideogram-1", name: "Ideogram 1.0", provider: "Ideogram" },
+    { id: "nano-banana", name: "Nano Banana", provider: "Nano" },
+    { id: "other", name: "其他", provider: "Other" },
+] as const
+
+/**
+ * 常用标签建议（用于标签输入的自动完成）
+ * 这些是最常用的标签，会在输入时作为建议显示
+ */
+export const popularTagSuggestions = [
+    "portrait", "landscape", "minimalist", "cinematic", "vibrant",
+    "dark", "fantasy", "realistic", "abstract", "retro",
+    "futuristic", "studio", "outdoor", "closeup", "macro",
+    "fashion", "editorial", "artistic", "cyberpunk", "anime",
+    "watercolor", "sketch", "neon", "monochrome", "pastel",
+    "nature", "urban", "vintage", "modern", "classic",
+]
+
 
 /**
  * UI 文本配置
