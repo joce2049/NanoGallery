@@ -1,24 +1,22 @@
 
 import { cookies } from 'next/headers';
 
-// 安全的环境变量读取：生产环境必须设置，开发环境可以使用默认值
-const getEnvVar = (key: string, fallback: string): string => {
+// 强制要求环境变量，不提供默认值（生产环境安全策略）
+const getRequiredEnvVar = (key: string): string => {
     const value = process.env[key];
-    const isProduction = process.env.NODE_ENV === 'production';
 
-    if (!value && isProduction) {
-        throw new Error(`❌ SECURITY: Environment variable ${key} is required in production!`);
+    if (!value) {
+        throw new Error(
+            `❌ SECURITY ERROR: Environment variable "${key}" is required but not set.\n` +
+            `Please set it in your .env.local file or environment configuration.`
+        );
     }
 
-    if (!value && !isProduction) {
-        console.warn(`⚠️  WARNING: Using default ${key}. Set environment variable for production.`);
-    }
-
-    return value || fallback;
+    return value;
 };
 
-const ADMIN_USER = getEnvVar('ADMIN_USER', 'admin');
-const ADMIN_PASSWORD = getEnvVar('ADMIN_PASSWORD', 'admin123');
+const ADMIN_USER = getRequiredEnvVar('ADMIN_USER');
+const ADMIN_PASSWORD = getRequiredEnvVar('ADMIN_PASSWORD');
 const SESSION_COOKIE_NAME = 'admin_session';
 
 export async function isAuthenticated() {
