@@ -1,8 +1,24 @@
 
 import { cookies } from 'next/headers';
 
-const ADMIN_USER = process.env.ADMIN_USER || 'admin';
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
+// 安全的环境变量读取：生产环境必须设置，开发环境可以使用默认值
+const getEnvVar = (key: string, fallback: string): string => {
+    const value = process.env[key];
+    const isProduction = process.env.NODE_ENV === 'production';
+
+    if (!value && isProduction) {
+        throw new Error(`❌ SECURITY: Environment variable ${key} is required in production!`);
+    }
+
+    if (!value && !isProduction) {
+        console.warn(`⚠️  WARNING: Using default ${key}. Set environment variable for production.`);
+    }
+
+    return value || fallback;
+};
+
+const ADMIN_USER = getEnvVar('ADMIN_USER', 'admin');
+const ADMIN_PASSWORD = getEnvVar('ADMIN_PASSWORD', 'admin123');
 const SESSION_COOKIE_NAME = 'admin_session';
 
 export async function isAuthenticated() {
