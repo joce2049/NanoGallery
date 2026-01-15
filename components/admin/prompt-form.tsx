@@ -33,7 +33,7 @@ export function PromptForm({ initialData, isEditing = false }: PromptFormProps) 
     const [content, setContent] = useState(initialData?.content || "")
     const [categoryId, setCategoryId] = useState(initialData?.categoryId || "photography")
     const [selectedTags, setSelectedTags] = useState<string[]>(initialData?.tags || [])
-    const [model, setModel] = useState(initialData?.metadata?.model || "Midjourney v6")
+    const [model, setModel] = useState(initialData?.metadata?.model || "Nano Banana")
     const [aspectRatio, setAspectRatio] = useState(initialData?.metadata?.aspectRatio || "2:3")
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {

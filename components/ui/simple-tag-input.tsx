@@ -42,7 +42,7 @@ export function SimpleTagInput({ value, onChange }: SimpleTagInputProps) {
             />
             <div className="flex flex-wrap gap-2 mt-2">
                 <span className="text-xs text-muted-foreground">推荐标签:</span>
-                {allTags.slice(0, 5).map(t => (
+                {allTags.slice(0, 10).map(t => (
                     <button
                         key={t.id}
                         type="button"
