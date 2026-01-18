@@ -80,12 +80,25 @@ export function ImageModal({ prompt, open, onOpenChange, onSelectPrompt }: Image
 
     const handleCopyPrompt = async (e?: React.MouseEvent) => {
         e?.stopPropagation()
-        const success = await copyToClipboard(prompt.content)
-        if (success) {
-            recordCopy(prompt.id)
-            setCopiesCount(prev => prev + 1)
-            setCopied(true)
-            setTimeout(() => setCopied(false), 2000)
+
+        try {
+            const success = await copyToClipboard(prompt.content)
+
+            if (success) {
+                recordCopy(prompt.id)
+                setCopiesCount(prev => prev + 1)
+                setCopied(true)
+                setTimeout(() => setCopied(false), 2000)
+
+                // Show success feedback
+                console.log('✅ Copy successful:', prompt.content.substring(0, 50) + '...')
+            } else {
+                console.error('❌ Copy failed')
+                alert('复制失败，请手动选择文本复制')
+            }
+        } catch (error) {
+            console.error('❌ Copy error:', error)
+            alert('复制出错，请手动选择文本复制')
         }
     }
 
@@ -139,12 +152,22 @@ export function ImageModal({ prompt, open, onOpenChange, onSelectPrompt }: Image
                             />
                         </div>
 
+
                         {/* Close button for Desktop - floating on image area */}
                         <button
                             onClick={() => onOpenChange(false)}
                             className="absolute top-6 left-6 p-3 rounded-full bg-black/10 hover:bg-black/20 text-foreground/80 hover:text-foreground dark:bg-white/10 dark:hover:bg-white/20 dark:text-foreground/80 dark:hover:text-foreground transition-all md:block hidden opacity-0 group-hover:opacity-100 duration-300 backdrop-blur-md z-50"
                         >
                             <X className="h-6 w-6" />
+                        </button>
+
+                        {/* Close button for Mobile - always visible, higher z-index */}
+                        <button
+                            onClick={() => onOpenChange(false)}
+                            className="md:hidden fixed top-4 right-4 p-2.5 rounded-full bg-black/60 hover:bg-black/80 text-white transition-all backdrop-blur-md z-[100] shadow-lg"
+                            aria-label="关闭"
+                        >
+                            <X className="h-5 w-5" />
                         </button>
                     </div>
 
@@ -227,10 +250,11 @@ export function ImageModal({ prompt, open, onOpenChange, onSelectPrompt }: Image
                                         <Button
                                             size="icon"
                                             variant="secondary"
-                                            className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 z-10"
+                                            className="absolute top-2 right-2 md:opacity-0 md:group-hover:opacity-100 transition-opacity h-8 w-8 z-10"
                                             onClick={handleCopyPrompt}
+                                            aria-label="复制 Prompt"
                                         >
-                                            {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                                            {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
                                         </Button>
                                     </div>
                                 </div>
