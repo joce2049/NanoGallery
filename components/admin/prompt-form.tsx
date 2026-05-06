@@ -1,0 +1,355 @@
+"use client"
+
+import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Label } from "@/components/ui/label"
+import { Card } from "@/components/ui/card"
+import { Upload, X, Loader2 } from "lucide-react"
+import Image from "next/image"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { SimpleTagInput } from "@/components/ui/simple-tag-input"
+import type { Category, Prompt } from "@/lib/types"
+import { getImageUrl } from "@/lib/utils"
+import { aiModels } from "@/lib/config"
+
+interface PromptFormProps {
+    initialData?: Partial<Prompt>
+    isEditing?: boolean
+}
+
+export function PromptForm({ initialData, isEditing = false }: PromptFormProps) {
+    const router = useRouter()
+    const [loading, setLoading] = useState(false)
+    const [uploading, setUploading] = useState(false)
+
+    // Form State
+    const [imageUrl, setImageUrl] = useState(initialData?.imageUrl || "")
+    const [thumbnailUrl, setThumbnailUrl] = useState(initialData?.thumbnailUrl || "")
+    const [title, setTitle] = useState(initialData?.title || "")
+    const [description, setDescription] = useState(initialData?.description || "")
+    const [content, setContent] = useState(initialData?.content || "")
+    const [categoryId, setCategoryId] = useState(initialData?.categoryId || "photography")
+    const [selectedTags, setSelectedTags] = useState<string[]>(initialData?.tags || [])
+    const [model, setModel] = useState(initialData?.metadata?.model || "Nano Banana")
+    const [aspectRatio, setAspectRatio] = useState(initialData?.metadata?.aspectRatio || "2:3")
+    const [status, setStatus] = useState<Prompt["status"]>(initialData?.status || "published")
+    const [categories, setCategories] = useState<Category[]>([])
+    const [uploadMeta, setUploadMeta] = useState<{
+        originalSize: number
+        compressedSize: number
+        width: number
+        height: number
+        quality: number
+        format: string
+        thumbnailSize?: number
+    } | null>(null)
+
+    const formatBytes = (bytes: number) => {
+        if (bytes < 1024) return `${bytes} B`
+        if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+        return `${(bytes / 1024 / 1024).toFixed(2)} MB`
+    }
+
+    useEffect(() => {
+        fetch("/api/categories")
+            .then(res => res.ok ? res.json() : [])
+            .then((data: Category[]) => setCategories(data.filter(category => category.enabled)))
+            .catch(() => setCategories([]))
+    }, [])
+
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const input = e.currentTarget
+        const file = e.target.files?.[0]
+        if (!file) return
+
+        setUploading(true)
+        const formData = new FormData()
+        formData.append("file", file)
+
+        try {
+            const res = await fetch("/api/upload", {
+                method: "POST",
+                body: formData,
+            })
+            if (res.ok) {
+                const data = await res.json()
+                setImageUrl(data.url)
+                setThumbnailUrl(data.thumbnailUrl || "")
+                setUploadMeta({
+                    originalSize: data.originalSize,
+                    compressedSize: data.compressedSize,
+                    thumbnailSize: data.thumbnailSize,
+                    width: data.width,
+                    height: data.height,
+                    quality: data.quality,
+                    format: data.format,
+                })
+            } else {
+                const data = await res.json().catch(() => null)
+                alert(data?.error || "上传失败")
+            }
+        } catch {
+            alert("上传出错")
+        } finally {
+            setUploading(false)
+            if (input) input.value = ""
+        }
+    }
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault()
+        if (!imageUrl) return alert("请先上传图片")
+
+        setLoading(true)
+        try {
+            const payload = {
+                id: initialData?.id, // Includes ID if editing
+                title,
+                description,
+                content,
+                categoryId,
+                imageUrl,
+                thumbnailUrl,
+                tags: selectedTags,
+                metadata: {
+                    model,
+                    aspectRatio,
+                },
+                status
+            }
+
+            const method = isEditing ? "PUT" : "POST"
+            const url = "/api/prompts"
+
+            const res = await fetch(url, {
+                method,
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+            })
+
+            if (res.ok) {
+                router.push("/admin")
+                router.refresh()
+            } else {
+                alert("保存失败")
+            }
+        } catch {
+            alert("保存出错")
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    return (
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* Left: Image Upload */}
+            <div className="space-y-4">
+                <Card className="bg-card border-dashed border-2 overflow-hidden aspect-[2/3] flex items-center justify-center relative hover:border-primary/50 transition-colors group">
+                    {imageUrl ? (
+                        <>
+                            <Image
+                                src={getImageUrl(imageUrl)}
+                                alt="Preview"
+                                fill
+                                className="object-contain p-2"
+                            />
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setImageUrl("")
+                                    setThumbnailUrl("")
+                                    setUploadMeta(null)
+                                }}
+                                className="absolute top-2 right-2 z-20 bg-black/50 p-2 rounded-full hover:bg-black/80 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                                <X className="w-4 h-4" />
+                            </button>
+                            <div className="absolute inset-x-0 bottom-0 z-10 bg-black/60 text-white text-sm font-medium py-3 text-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                点击替换图片
+                            </div>
+                        </>
+                    ) : (
+                        <div className="text-center space-y-4">
+                            {uploading ? (
+                                <Loader2 className="w-8 h-8 text-muted-foreground animate-spin mx-auto" />
+                            ) : (
+                                <>
+                                    <div className="bg-muted p-4 rounded-full w-fit mx-auto">
+                                        <Upload className="w-6 h-6 text-muted-foreground" />
+                                    </div>
+                                    <div>
+                                        <p className="font-medium text-foreground">点击或拖拽上传图片</p>
+                                        <p className="text-sm text-muted-foreground mt-1">支持 JPG, PNG, WebP (Max 10MB)</p>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    )}
+                    <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        onChange={handleFileChange}
+                        className="absolute inset-0 opacity-0 cursor-pointer disabled:cursor-not-allowed"
+                        disabled={uploading}
+                    />
+                </Card>
+
+                {uploadMeta && (
+                    <div className="bg-card border border-border rounded-lg p-4 text-sm space-y-1">
+                        <div className="flex justify-between">
+                            <span className="text-muted-foreground">压缩前</span>
+                            <span>{formatBytes(uploadMeta.originalSize)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span className="text-muted-foreground">压缩后</span>
+                            <span>{formatBytes(uploadMeta.compressedSize)}</span>
+                        </div>
+                        {uploadMeta.thumbnailSize !== undefined && (
+                            <div className="flex justify-between">
+                                <span className="text-muted-foreground">缩略图</span>
+                                <span>{formatBytes(uploadMeta.thumbnailSize)}</span>
+                            </div>
+                        )}
+                        <div className="flex justify-between">
+                            <span className="text-muted-foreground">减少比例</span>
+                            <span>{Math.max(0, 100 - (uploadMeta.compressedSize / uploadMeta.originalSize) * 100).toFixed(1)}%</span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span className="text-muted-foreground">输出</span>
+                            <span>{uploadMeta.format.toUpperCase()} · {uploadMeta.width}×{uploadMeta.height} · Q{uploadMeta.quality}</span>
+                        </div>
+                    </div>
+                )}
+
+                <div className="bg-card border border-border rounded-lg p-4 space-y-3">
+                    <Label className="text-muted-foreground">元数据</Label>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label>模型</Label>
+                            <Select value={model} onValueChange={setModel}>
+                                <SelectTrigger className="bg-background">
+                                    <SelectValue placeholder="选择 AI 模型" />
+                                </SelectTrigger>
+                                <SelectContent className="max-h-[300px]">
+                                    {aiModels.map(m => (
+                                        <SelectItem key={m.id} value={m.name}>
+                                            {m.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="space-y-2">
+                            <Label>比例</Label>
+                            <Select value={aspectRatio} onValueChange={setAspectRatio}>
+                                <SelectTrigger className="bg-background">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="1:1">1:1 (Square)</SelectItem>
+                                    <SelectItem value="2:3">2:3 (Portrait)</SelectItem>
+                                    <SelectItem value="3:2">3:2 (Landscape)</SelectItem>
+                                    <SelectItem value="3:4">3:4 (Portrait)</SelectItem>
+                                    <SelectItem value="4:3">4:3 (Landscape)</SelectItem>
+                                    <SelectItem value="16:9">16:9 (Wide)</SelectItem>
+                                    <SelectItem value="9:16">9:16 (Story)</SelectItem>
+                                    <SelectItem value="21:9">21:9 (Ultrawide)</SelectItem>
+                                    <SelectItem value="9:21">9:21 (Tall)</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Right: Info Form */}
+            <div className="space-y-6 pb-4">
+                <div className="space-y-2">
+                    <Label>标题</Label>
+                    <Input
+                        value={title}
+                        onChange={e => setTitle(e.target.value)}
+                        placeholder="如: Cyberpunk Street"
+                        className="bg-background"
+                        required
+                    />
+                </div>
+
+                <div className="space-y-2">
+                    <Label>中文描述 (Description)</Label>
+                    <Input
+                        value={description}
+                        onChange={e => setDescription(e.target.value)}
+                        placeholder="简短的中文介绍..."
+                        className="bg-background"
+                        required
+                    />
+                </div>
+
+                <div className="space-y-2">
+                    <Label>Prompt 内容 (English)</Label>
+                    <Textarea
+                        value={content}
+                        onChange={e => setContent(e.target.value)}
+                        placeholder="Complete prompt text..."
+                        className="bg-background min-h-[120px] font-mono text-sm"
+                        required
+                    />
+                </div>
+
+                <div className="space-y-2">
+                    <Label>分类</Label>
+                    <Select value={categoryId} onValueChange={setCategoryId}>
+                        <SelectTrigger className="bg-background">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {categories.map(c => (
+                                <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+
+                <div className="space-y-2">
+                    <Label>状态</Label>
+                    <Select value={status} onValueChange={(value) => setStatus(value as Prompt["status"])}>
+                        <SelectTrigger className="bg-background">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="published">已发布</SelectItem>
+                            <SelectItem value="draft">草稿</SelectItem>
+                            <SelectItem value="archived">归档</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+
+                <div className="space-y-2">
+                    <Label>标签</Label>
+                    <SimpleTagInput value={selectedTags} onChange={setSelectedTags} />
+                </div>
+
+                <div className="sticky bottom-0 z-10 pt-4 pb-4 bg-background border-t border-border shadow-lg -mx-2 px-2 mt-auto">
+                    <Button
+                        type="submit"
+                        className="w-full"
+                        disabled={loading || !imageUrl}
+                    >
+                        {loading ? (
+                            <>
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                {isEditing ? "保存修改" : "发布 Prompt"}
+                            </>
+                        ) : (
+                            isEditing ? "保存修改" : "发布 Prompt"
+                        )}
+                    </Button>
+                </div>
+            </div>
+        </form>
+    )
+}

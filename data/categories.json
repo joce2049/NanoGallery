@@ -1,0 +1,82 @@
+[
+  {
+    "id": "photography",
+    "name": "摄影",
+    "slug": "photography",
+    "description": "真实摄影风格的 AI 图像",
+    "order": 1,
+    "enabled": true
+  },
+  {
+    "id": "illustration",
+    "name": "插画",
+    "slug": "illustration",
+    "description": "手绘和插画风格",
+    "order": 2,
+    "enabled": true
+  },
+  {
+    "id": "3d",
+    "name": "3D",
+    "slug": "3d",
+    "description": "三维渲染和建模",
+    "order": 3,
+    "enabled": true
+  },
+  {
+    "id": "ai-art",
+    "name": "AI 艺术",
+    "slug": "ai-art",
+    "description": "创意 AI 艺术作品",
+    "order": 4,
+    "enabled": true
+  },
+  {
+    "id": "poster",
+    "name": "海报",
+    "slug": "poster",
+    "description": "海报和宣传设计",
+    "order": 5,
+    "enabled": true
+  },
+  {
+    "id": "branding",
+    "name": "品牌",
+    "slug": "branding",
+    "description": "品牌和 logo 设计",
+    "order": 6,
+    "enabled": true
+  },
+  {
+    "id": "product",
+    "name": "产品",
+    "slug": "product",
+    "description": "产品摄影和展示",
+    "order": 7,
+    "enabled": true
+  },
+  {
+    "id": "concept",
+    "name": "概念",
+    "slug": "concept",
+    "description": "概念艺术和设计",
+    "order": 8,
+    "enabled": true
+  },
+  {
+    "id": "character",
+    "name": "角色",
+    "slug": "character",
+    "description": "人物和角色设计",
+    "order": 9,
+    "enabled": true
+  },
+  {
+    "id": "landscape",
+    "name": "风景",
+    "slug": "landscape",
+    "description": "自然和城市风景",
+    "order": 10,
+    "enabled": true
+  }
+]

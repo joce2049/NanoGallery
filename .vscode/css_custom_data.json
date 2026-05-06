@@ -1,0 +1,33 @@
+{
+    "version": 1.1,
+    "atDirectives": [
+        {
+            "name": "@theme",
+            "description": "Tailwind CSS theme configuration"
+        },
+        {
+            "name": "@custom-variant",
+            "description": "Tailwind CSS custom variant"
+        },
+        {
+            "name": "@apply",
+            "description": "Apply utility classes"
+        },
+        {
+            "name": "@utility",
+            "description": "Define custom utility"
+        },
+        {
+            "name": "@variant",
+            "description": "Define custom variant"
+        },
+        {
+            "name": "@source",
+            "description": "Define content source"
+        },
+        {
+            "name": "@plugin",
+            "description": "Register plugin"
+        }
+    ]
+}
