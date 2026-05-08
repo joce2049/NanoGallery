@@ -18,11 +18,16 @@ services:
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-changeme}
       - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
       - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+      - TURNSTILE_SITE_KEY=${TURNSTILE_SITE_KEY}
+      - TURNSTILE_SECRET_KEY=${TURNSTILE_SECRET_KEY}
+      - NANO_STORAGE_DIR=/app/storage
+      - NANO_DATA_DIR=/app/storage/data
+      - NANO_UPLOADS_DIR=/app/storage/uploads
     volumes:
-      # 挂载数据目录（JSON数据库文件）
-      - ./data:/app/data
-      # 挂载图片上传目录
-      - ./public/uploads:/app/public/uploads
+      # 运行时数据：Git 拉库/重建镜像不会覆盖这里
+      - ${NANO_HOST_STORAGE_DIR:-./storage}/data:/app/storage/data
+      - ${NANO_HOST_STORAGE_DIR:-./storage}/uploads:/app/storage/uploads
+      - ${NANO_HOST_STORAGE_DIR:-./storage}/backups:/app/storage/backups
     networks:
       - nano-network
 

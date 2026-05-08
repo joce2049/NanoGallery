@@ -50,10 +50,13 @@ COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Create directories for mounted volumes
-# Ensure public/uploads exists and is writable
-RUN mkdir -p /app/data /app/public/uploads && \
-    chown -R nextjs:nodejs /app/data /app/public/uploads
+# Create directories for mounted runtime volumes.
+RUN mkdir -p /app/storage/data /app/storage/uploads /app/storage/backups && \
+    chown -R nextjs:nodejs /app/storage
+
+ENV NANO_STORAGE_DIR=/app/storage
+ENV NANO_DATA_DIR=/app/storage/data
+ENV NANO_UPLOADS_DIR=/app/storage/uploads
 
 USER nextjs
 

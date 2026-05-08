@@ -1,0 +1,29 @@
+
+import { JSONFileDB } from "@/server/db"
+import { AdminPromptList } from "@/features/admin/components/admin-prompt-list"
+
+export default async function AdminDashboard() {
+    const prompts = await JSONFileDB.getAllPrompts({ includeContent: false })
+    // Sort by updatedAt desc (latest modified first)
+    prompts.sort((a, b) => {
+        const dateA = new Date(a.updatedAt || a.createdAt).getTime()
+        const dateB = new Date(b.updatedAt || b.createdAt).getTime()
+        return dateB - dateA
+    })
+
+    return (
+        <div className="space-y-6">
+
+
+            <div className="grid gap-6">
+                <div className="bg-card border border-border rounded-lg overflow-hidden">
+                    <div className="p-4 border-b border-border bg-muted/50">
+                        <h3 className="font-semibold text-foreground">所有内容 ({prompts.length})</h3>
+                    </div>
+
+                    <AdminPromptList initialPrompts={prompts} />
+                </div>
+            </div>
+        </div>
+    )
+}

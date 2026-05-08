@@ -32,9 +32,15 @@ next-env.d.ts
 /public/uploads
 /uploads
 
+# runtime storage (JSON index/content, uploaded images, backups)
+/storage
+
 # internal docs (not for public repo)
 AGENTS.md
 CHANGELOG-OPTIMIZATION.md
 CLAUDE.md
 CONFIG.md
 README-DOCKER.md
+
+# production data (managed at runtime, must NOT be overwritten by git)
+/data/*.json

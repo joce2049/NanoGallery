@@ -24,18 +24,24 @@
     ],
     "paths": {
       "@/*": [
-        "./*"
+        "./src/*"
       ]
     }
   },
   "include": [
     "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "scripts/**/*.cjs",
+    "*.mjs",
+    ".next/types/routes.d.ts",
+    ".next/types/validator.ts",
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    ".next/dev",
+    ".next/types/app"
   ]
 }

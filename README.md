@@ -29,6 +29,7 @@ npm run lint
 npm run typecheck
 npm run build
 npm run start
+npm run backup:data
 ```
 
 `npm run build` 使用 `next build --webpack`，用于避开部分本地环境下 Turbopack CSS 构建时的端口权限问题。
@@ -36,36 +37,70 @@ npm run start
 ## 项目结构
 
 ```text
-app/                  页面与 API 路由
-components/           前台、后台和通用 UI 组件
-data/prompts.json     Prompt 内容与本地统计数据
-data/tags.json        后台推荐标签数据
-lib/                  数据工具、配置、认证、JSON 文件数据库、Supabase 客户端
-public/               静态资源与上传图片
+src/app/              Next.js 页面、布局和 API 路由入口
+src/features/         按业务域拆分的前台、后台、搜索、认证、统计等组件
+src/shared/ui/        当前实际使用的 shadcn/Radix 基础 UI 组件
+src/shared/lib/       跨端共享的通用工具函数
+src/core/             领域类型、种子数据和纯数据处理工具
+src/server/           认证、JSON 文件数据库、上传路径、Supabase、媒体清理
+src/config.ts         站点、分类、标签、模型和 UI 文案配置
+public/               随代码发布的静态资源
+storage/              运行时数据、上传图片和备份，不提交到 Git
 scripts/              工程辅助脚本
 ```
 
+目录约定：
+
+- 路由文件保持薄入口，只负责组装数据和页面组件。
+- 可被前台、后台或未来移动端复用的纯逻辑放在 `src/core` 或 `src/shared`。
+- 只在服务端运行、依赖文件系统或 Cookie 的代码放在 `src/server`。
+- 新业务优先在 `src/features/<domain>/components` 内聚，避免再把组件平铺到根目录。
+
 ## 数据流说明
 
-前台搜索页、详情页、排行页和首页内容统一读取 `data/prompts.json`。`lib/mock-data.ts` 只作为首次初始化的种子数据保留。
+前台搜索页、详情页、排行页和首页内容统一读取运行时存储。默认路径为 `storage/data`，可通过环境变量调整。`src/core/mock-data.ts` 只保留空 Prompt 种子和配置导出，不再内置演示图片数据。
 
-`lib/data-utils.ts` 是纯工具层，只负责筛选、排序、分页和标签映射，不直接读取 mock 数据或文件。
+Prompt 数据已拆分：
+
+```text
+storage/data/prompts/index.json       轻量索引：标题、描述、图片、标签、统计、状态
+storage/data/prompts/content/*.txt    Prompt 正文：按 Prompt ID 独立存储
+storage/data/tags.json                推荐标签
+storage/data/categories.json          分类
+storage/data/manifest.json            本地数据仓库版本、布局和更新时间
+storage/data/settings.json            用户站点配置和上传压缩配置
+```
+
+列表页默认只加载轻量索引，打开详情或弹窗时再读取对应 Prompt 正文，避免 Prompt 正文过多导致单个 JSON 文件越来越大。
+
+本地数据仓库采用显式版本结构。应用会维护 `manifest.json`，用于记录当前数据结构版本和最后更新时间。未来需要升级数据结构时，应新增明确的迁移脚本或后台维护动作，不做隐式旧格式导入，避免本地数据发生不可预期的混用。
+
+所有本地 JSON 和 Prompt 正文写入都通过临时文件原子替换完成；同一进程内的写操作会排队执行，减少并发保存、统计写入或容器重启时写坏文件的风险。
+
+`src/core/data-utils.ts` 是纯工具层，只负责筛选、排序、分页和标签映射，不直接读取 mock 数据或文件。
 
 统计支持两种模式：
 
 - 配置 Supabase 时，浏览、复制、点赞统计写入 Supabase。
-- 未配置 Supabase 时，统计写回 `data/prompts.json`。
+- 未配置 Supabase 时，统计写回 `storage/data/prompts/index.json`。
 
 ## 环境变量
 
 ```env
-ADMIN_USERNAME=admin
+ADMIN_USER=admin
 ADMIN_PASSWORD=your-password
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
+TURNSTILE_SITE_KEY=your-cloudflare-turnstile-site-key
+TURNSTILE_SECRET_KEY=your-cloudflare-turnstile-secret-key
+NANO_STORAGE_DIR=./storage
+NANO_DATA_DIR=./storage/data
+NANO_UPLOADS_DIR=./storage/uploads
 ```
 
 Supabase 环境变量为空时，应用会自动使用本地 JSON 统计模式。
+
+`NANO_DATA_DIR` 和 `NANO_UPLOADS_DIR` 是生产数据目录，建议挂载到代码仓库之外，避免 `git pull`、重新构建镜像或重新部署覆盖真实数据。
 
 ## 后台内容管理
 
@@ -81,18 +116,38 @@ Supabase 环境变量为空时，应用会自动使用本地 JSON 统计模式�
 - 上传并自动压缩图片
 - 替换已有 Prompt 图片
 - 管理推荐标签
+- 调整站点名称、简介、SEO 文案和后台名称
+- 调整图片上传大小、主图尺寸、缩略图尺寸和 WebP 质量
 
 图片上传策略：
 
 ```text
 允许格式：JPG / PNG / WebP
-最大上传大小：10MB
+默认最大上传大小：10MB，可在后台设置中调整
 输出格式：WebP
-最长边限制：2400px
-WebP quality：82
+默认最长边限制：3000px，可在后台设置中调整
+默认 WebP quality：90，可在后台设置中调整
 ```
 
+管理员登录使用 Cloudflare Turnstile 人机验证。前端只读取 `TURNSTILE_SITE_KEY`，后端使用 `TURNSTILE_SECRET_KEY` 调用 Cloudflare 校验 token；连续失败后仍会短暂冷却，降低撞库和暴力破解风险。
+
 ## Docker 部署
+
+如果宿主机数据目录不在仓库内，先在 `.env` 中指定挂载根目录：
+
+```env
+NANO_HOST_STORAGE_DIR=/mnt/cachei/appdata/nanogallery
+TURNSTILE_SITE_KEY=your-cloudflare-turnstile-site-key
+TURNSTILE_SECRET_KEY=your-cloudflare-turnstile-secret-key
+```
+
+容器内路径保持默认，不需要改：
+
+```env
+NANO_STORAGE_DIR=/app/storage
+NANO_DATA_DIR=/app/storage/data
+NANO_UPLOADS_DIR=/app/storage/uploads
+```
 
 ```bash
 docker compose up -d --build
@@ -101,26 +156,35 @@ docker compose up -d --build
 生产环境建议挂载或持久化以下目录：
 
 ```text
-data/
-public/uploads/
+storage/data/
+storage/uploads/
+storage/backups/
 ```
+
+`docker-compose.yml` 会把 `${NANO_HOST_STORAGE_DIR:-./storage}` 挂载到容器内的 `/app/storage` 子目录。新的写入会进入宿主机持久化目录，避免代码更新或镜像重建覆盖真实数据。
 
 ## 备份与恢复
 
-需要备份：
+一键备份：
 
-```text
-data/prompts.json
-data/tags.json
-public/uploads/
+```bash
+npm run backup:data
 ```
 
-恢复时将这些文件和目录放回同名路径即可。
+需要重点备份：
+
+```text
+storage/data/
+storage/uploads/
+storage/backups/
+```
+
+恢复时将 `storage/data/` 与 `storage/uploads/` 放回同名路径即可。
 
 ## 生产环境建议
 
 - 设置强密码并通过环境变量管理后台账号。
 - 如果访问量较高，建议配置 Supabase 保存统计事件。
-- 定期备份 `data/` 与 `public/uploads/`。
+- 定期备份 `storage/data/` 与 `storage/uploads/`。
 - 图片上传目录在容器部署时需要持久化。
 - 发布前运行 `npm run lint`、`npm run typecheck`、`npm run build`。
