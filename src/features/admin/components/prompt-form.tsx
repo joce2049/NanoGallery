@@ -7,7 +7,7 @@ import { Input } from "@/shared/ui/input"
 import { Textarea } from "@/shared/ui/textarea"
 import { Label } from "@/shared/ui/label"
 import { Card } from "@/shared/ui/card"
-import { Upload, X, Loader2 } from "lucide-react"
+import { Upload, X, Loader2, Lock, Unlock } from "lucide-react"
 import Image from "next/image"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select"
 import { SimpleTagInput } from "@/shared/ui/simple-tag-input"
@@ -42,6 +42,7 @@ export function PromptForm({ initialData, isEditing = false }: PromptFormProps) 
     const [title, setTitle] = useState(initialData?.title || "")
     const [description, setDescription] = useState(initialData?.description || "")
     const [content, setContent] = useState(initialData?.content || "")
+    const [contentPublic, setContentPublic] = useState(initialData?.contentPublic !== false)
     const [categoryId, setCategoryId] = useState(initialData?.categoryId || appDefaults.prompt.categoryId)
     const [selectedTags, setSelectedTags] = useState<string[]>(initialData?.tags || [])
     const [modelId, setModelId] = useState<string>(initialModel?.id || defaultModelId)
@@ -166,6 +167,7 @@ export function PromptForm({ initialData, isEditing = false }: PromptFormProps) 
                 title,
                 description,
                 content,
+                contentPublic,
                 categoryId,
                 imageUrl: nextImageUrl,
                 thumbnailUrl: nextThumbnailUrl,
@@ -375,7 +377,19 @@ export function PromptForm({ initialData, isEditing = false }: PromptFormProps) 
                 </div>
 
                 <div className="space-y-2">
-                    <Label>Prompt 内容 (English)</Label>
+                    <div className="flex items-center justify-between gap-3">
+                        <Label>Prompt 内容</Label>
+                        <Button
+                            type="button"
+                            variant={contentPublic ? "secondary" : "outline"}
+                            size="sm"
+                            className="h-8 gap-2"
+                            onClick={() => setContentPublic((value) => !value)}
+                        >
+                            {contentPublic ? <Unlock className="h-3.5 w-3.5" /> : <Lock className="h-3.5 w-3.5" />}
+                            {contentPublic ? "公开" : "不公开"}
+                        </Button>
+                    </div>
                     <Textarea
                         value={content}
                         onChange={e => setContent(e.target.value)}

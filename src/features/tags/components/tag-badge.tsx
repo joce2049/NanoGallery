@@ -2,6 +2,8 @@
 
 import type { Tag as TagType } from "@/core/types"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
+import type { MouseEvent } from "react"
 import { Badge } from "@/shared/ui/badge"
 
 const sizeClasses = {
@@ -16,6 +18,15 @@ interface TagBadgeProps {
 }
 
 export function TagBadge({ tag, clickable = true, size = "sm" }: TagBadgeProps) {
+    const pathname = usePathname()
+
+    const handleTagNavigation = (event: MouseEvent<HTMLAnchorElement>) => {
+        if (pathname !== "/") return
+
+        event.preventDefault()
+        window.history.pushState({}, "", `/?tag=${tag.slug}`)
+        window.scrollTo({ top: 0, behavior: "smooth" })
+    }
 
     const badgeContent = (
         <Badge
@@ -28,7 +39,11 @@ export function TagBadge({ tag, clickable = true, size = "sm" }: TagBadgeProps) 
     )
 
     if (clickable) {
-        return <Link href={`/?tag=${tag.slug}`}>{badgeContent}</Link>
+        return (
+            <Link href={`/?tag=${tag.slug}`} prefetch={false} onClick={handleTagNavigation}>
+                {badgeContent}
+            </Link>
+        )
     }
 
     return badgeContent

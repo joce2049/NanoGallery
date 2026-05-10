@@ -8,7 +8,7 @@ import { Separator } from "@/shared/ui/separator"
 import { ScrollArea } from "@/shared/ui/scroll-area"
 import { Menu, Sparkles, Search, ChevronDown, User, LayoutDashboard } from "lucide-react"
 import { getAllCategories } from "@/core/data-utils"
-import { useEffect, useState, Suspense } from "react"
+import { useEffect, useState, Suspense, type MouseEvent } from "react"
 import { cn } from "@/shared/lib/utils"
 import type { Category } from "@/core/types"
 
@@ -70,6 +70,22 @@ function MobileSidebarContent({ isLoggedIn = false, siteName }: MobileSidebarPro
         { label: "全部", href: "/", icon: Sparkles },
     ]
 
+    const handleHomeFilterNavigation = (
+        href: string,
+        event: MouseEvent<HTMLAnchorElement>,
+        afterNavigate?: () => void
+    ) => {
+        if (pathname !== "/") {
+            afterNavigate?.()
+            return
+        }
+
+        event.preventDefault()
+        window.history.pushState({}, "", href)
+        window.scrollTo({ top: 0, behavior: "smooth" })
+        afterNavigate?.()
+    }
+
     const handleLogout = async () => {
         setLoggingOut(true)
         try {
@@ -96,7 +112,12 @@ function MobileSidebarContent({ isLoggedIn = false, siteName }: MobileSidebarPro
                     <SheetTitle className="sr-only">{siteName}</SheetTitle>
                     {/* Logo */}
                     <div className="flex h-16 items-center px-6">
-                        <Link href="/" className="flex items-center space-x-2" onClick={() => setOpen(false)}>
+                        <Link
+                            href="/"
+                            prefetch={false}
+                            className="flex items-center space-x-2"
+                            onClick={(event) => handleHomeFilterNavigation("/", event, () => setOpen(false))}
+                        >
                             <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-white via-slate-200 to-cyan-100 shadow-sm ring-1 ring-slate-300/70 flex items-center justify-center">
                                 <Sparkles className="h-5 w-5 text-slate-900" />
                             </div>
@@ -128,7 +149,12 @@ function MobileSidebarContent({ isLoggedIn = false, siteName }: MobileSidebarPro
                             {navItems.map((item) => {
                                 const Icon = item.icon
                                 return (
-                                    <Link key={item.href} href={item.href} onClick={() => setOpen(false)}>
+                                    <Link
+                                        key={item.href}
+                                        href={item.href}
+                                        prefetch={false}
+                                        onClick={(event) => handleHomeFilterNavigation(item.href, event, () => setOpen(false))}
+                                    >
                                         <Button
                                             variant={isActive(item.href) ? "secondary" : "ghost"}
                                             className={cn(
@@ -167,7 +193,16 @@ function MobileSidebarContent({ isLoggedIn = false, siteName }: MobileSidebarPro
                                     {categories.map((category) => {
                                         const isSelected = currentCategory === category.slug
                                         return (
-                                            <Link key={category.id} href={`/?category=${category.slug}`} onClick={() => setOpen(false)}>
+                                            <Link
+                                                key={category.id}
+                                                href={`/?category=${category.slug}`}
+                                                prefetch={false}
+                                                onClick={(event) => handleHomeFilterNavigation(
+                                                    `/?category=${category.slug}`,
+                                                    event,
+                                                    () => setOpen(false)
+                                                )}
+                                            >
                                                 <Button
                                                     variant={isSelected ? "secondary" : "ghost"}
                                                     size="sm"

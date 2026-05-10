@@ -78,6 +78,7 @@ export class JSONFileDB {
         return prompts.map((p: any) => ({
             ...p,
             content: includeContent ? String(p.content || "") : "",
+            contentPublic: p.contentPublic !== false,
             tags: Array.isArray(p.tags) ? p.tags : [],
             views: Number(p.views ?? 0),
             copies: Number(p.copies ?? 0),

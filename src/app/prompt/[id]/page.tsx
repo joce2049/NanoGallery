@@ -1,5 +1,5 @@
 import { ImageCard } from "@/features/gallery/components/image-card"
-import { ChevronLeft, Sparkles } from "lucide-react"
+import { ChevronLeft, Lock, Sparkles } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { getPromptTags, getRelatedPrompts } from "@/core/data-utils"
@@ -10,6 +10,7 @@ import { notFound } from "next/navigation"
 import { isPublishedPrompt, siteConfig } from "@/config"
 import { JSONFileDB } from "@/server/db"
 import { getImageUrl } from "@/shared/lib/utils"
+import { getRuntimeSettings } from "@/server/settings"
 
 interface PromptDetailPageProps {
     params: Promise<{ id: string }>
@@ -17,10 +18,11 @@ interface PromptDetailPageProps {
 
 export default async function PromptDetailPage({ params }: PromptDetailPageProps) {
     const { id } = await params
-    const [prompt, allPrompts, allTags] = await Promise.all([
+    const [prompt, allPrompts, allTags, settings] = await Promise.all([
         JSONFileDB.getPromptById(id),
         JSONFileDB.getAllPrompts({ includeContent: false }),
         JSONFileDB.getAllTags(),
+        getRuntimeSettings(),
     ])
 
     if (!prompt || !isPublishedPrompt(prompt)) {
@@ -29,6 +31,7 @@ export default async function PromptDetailPage({ params }: PromptDetailPageProps
 
     const tags = getPromptTags(prompt, allTags)
     const relatedPrompts = getRelatedPrompts(prompt, allPrompts, 6)
+    const isPromptContentPublic = prompt.contentPublic !== false
 
     return (
         <div className="min-h-screen bg-background">
@@ -77,9 +80,22 @@ export default async function PromptDetailPage({ params }: PromptDetailPageProps
                                     <Sparkles className="h-4 w-4" />
                                     Prompt 内容
                                 </h3>
-                                <CopyPromptButton promptId={prompt.id} content={prompt.content} size="sm" />
+                                {isPromptContentPublic && (
+                                    <CopyPromptButton promptId={prompt.id} content={prompt.content} size="sm" />
+                                )}
                             </div>
-                            <p className="text-sm leading-relaxed whitespace-pre-wrap">{prompt.content}</p>
+                            {isPromptContentPublic ? (
+                                <p className="text-sm leading-relaxed whitespace-pre-wrap">{prompt.content}</p>
+                            ) : (
+                                <div className="flex min-h-[160px] flex-col items-center justify-center gap-3 text-center text-muted-foreground">
+                                    <div className="rounded-full border border-border bg-background/70 p-3 shadow-sm">
+                                        <Lock className="h-6 w-6" />
+                                    </div>
+                                    <p className="max-w-sm text-sm leading-relaxed">
+                                        {settings.prompt.lockedContentMessage}
+                                    </p>
+                                </div>
+                            )}
                         </div>
 
                         {/* Metadata */}

@@ -130,6 +130,7 @@ export default function TopPage() {
                 allPrompts={topPrompts}
                 tags={tags}
                 onStatsChange={handleStatsChange}
+                lockedPromptMessage={settings.prompt.lockedContentMessage}
             />
 
             {/* Footer */}

@@ -7,7 +7,7 @@ import { Separator } from "@/shared/ui/separator"
 import { ScrollArea } from "@/shared/ui/scroll-area"
 import { Sparkles, Search, ChevronDown, User, Sun, Moon, LayoutDashboard } from "lucide-react"
 import { getAllCategories } from "@/core/data-utils"
-import { useState, Suspense, useEffect } from "react"
+import { useState, Suspense, useEffect, type MouseEvent } from "react"
 import { cn } from "@/shared/lib/utils"
 import { useTheme } from "next-themes"
 import type { Category } from "@/core/types"
@@ -77,6 +77,14 @@ function SidebarContent({ isLoggedIn = false, siteName }: SidebarProps) {
         { label: "全部", href: "/", icon: Sparkles },
     ]
 
+    const handleHomeFilterNavigation = (href: string, event: MouseEvent<HTMLAnchorElement>) => {
+        if (pathname !== "/") return
+
+        event.preventDefault()
+        window.history.pushState({}, "", href)
+        window.scrollTo({ top: 0, behavior: "smooth" })
+    }
+
     const handleLogout = async () => {
         setLoggingOut(true)
         try {
@@ -95,7 +103,12 @@ function SidebarContent({ isLoggedIn = false, siteName }: SidebarProps) {
             <div className="flex h-full flex-col">
                 {/* Logo */}
                 <div className="flex h-16 items-center px-6">
-                    <Link href="/" className="flex items-center space-x-2">
+                    <Link
+                        href="/"
+                        prefetch={false}
+                        className="flex items-center space-x-2"
+                        onClick={(event) => handleHomeFilterNavigation("/", event)}
+                    >
                         <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-white via-slate-200 to-cyan-100 shadow-sm ring-1 ring-slate-300/70 flex items-center justify-center">
                             <Sparkles className="h-5 w-5 text-slate-900" />
                         </div>
@@ -127,7 +140,12 @@ function SidebarContent({ isLoggedIn = false, siteName }: SidebarProps) {
                         {navItems.map((item) => {
                             const Icon = item.icon
                             return (
-                                <Link key={item.href} href={item.href}>
+                                <Link
+                                    key={item.href}
+                                    href={item.href}
+                                    prefetch={false}
+                                    onClick={(event) => handleHomeFilterNavigation(item.href, event)}
+                                >
                                     <Button
                                         variant={isActive(item.href) ? "secondary" : "ghost"}
                                         className={cn(
@@ -166,7 +184,12 @@ function SidebarContent({ isLoggedIn = false, siteName }: SidebarProps) {
                                 {categories.map((category) => {
                                     const isSelected = currentCategory === category.slug
                                     return (
-                                        <Link key={category.id} href={`/?category=${category.slug}`}>
+                                        <Link
+                                            key={category.id}
+                                            href={`/?category=${category.slug}`}
+                                            prefetch={false}
+                                            onClick={(event) => handleHomeFilterNavigation(`/?category=${category.slug}`, event)}
+                                        >
                                             <Button
                                                 variant={isSelected ? "secondary" : "ghost"}
                                                 size="sm"

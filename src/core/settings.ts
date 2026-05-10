@@ -17,6 +17,9 @@ export type RuntimeSettings = {
         webpQuality: number
         thumbnailQuality: number
     }
+    prompt: {
+        lockedContentMessage: string
+    }
 }
 
 export const defaultRuntimeSettings: RuntimeSettings = {
@@ -35,6 +38,9 @@ export const defaultRuntimeSettings: RuntimeSettings = {
         thumbnailDimension: appDefaults.upload.thumbnailDimension,
         webpQuality: appDefaults.upload.webpQuality,
         thumbnailQuality: appDefaults.upload.thumbnailQuality,
+    },
+    prompt: {
+        lockedContentMessage: "该作品的 Prompt 内容暂未公开，您仍可以参考图片、标签和模型信息获取灵感。",
     },
 }
 

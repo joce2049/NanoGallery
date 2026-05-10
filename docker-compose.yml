@@ -10,6 +10,7 @@ services:
         NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
     container_name: nano-gallery
     restart: unless-stopped
+    user: "${PUID:-1001}:${PGID:-1001}"
     ports:
       - "3000:3000"
     environment:

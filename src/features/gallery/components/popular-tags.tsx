@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import type { MouseEvent } from "react"
 import type { Prompt, Tag } from "@/core/types"
 import { Badge } from "@/shared/ui/badge"
 
@@ -31,11 +32,22 @@ export function PopularTags({ prompts, tags, limit = 12, className = "" }: Popul
 
     if (popularTags.length === 0) return null
 
+    const handleTagNavigation = (href: string, event: MouseEvent<HTMLAnchorElement>) => {
+        event.preventDefault()
+        window.history.pushState({}, "", href)
+        window.scrollTo({ top: 0, behavior: "smooth" })
+    }
+
     return (
         <div className={`flex flex-wrap items-center justify-center gap-2 ${className}`}>
             <span className="text-xs text-muted-foreground">热门标签</span>
             {popularTags.map(({ tag, count }) => (
-                <Link key={tag.id} href={`/?tag=${tag.slug}`}>
+                <Link
+                    key={tag.id}
+                    href={`/?tag=${tag.slug}`}
+                    prefetch={false}
+                    onClick={(event) => handleTagNavigation(`/?tag=${tag.slug}`, event)}
+                >
                     <Badge
                         variant="secondary"
                         className="rounded-full px-3 py-1 text-xs hover:bg-accent transition-colors"

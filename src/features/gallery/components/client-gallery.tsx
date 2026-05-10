@@ -290,6 +290,7 @@ export function ClientGallery({ initialPrompts, categories: initialCategories, t
                 allPrompts={prompts}
                 tags={tags}
                 onStatsChange={handleStatsChange}
+                lockedPromptMessage={settings.prompt.lockedContentMessage}
             />
 
             {/* Footer */}

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import Image from "next/image"
 import { Dialog, DialogContent, DialogTitle } from "@/shared/ui/dialog"
 import { Button } from "@/shared/ui/button"
-import { Copy, X, Heart, Sparkles, Terminal, Share2, Check, ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
+import { Copy, X, Heart, Sparkles, Terminal, Share2, Check, ChevronLeft, ChevronRight, Loader2, Lock } from "lucide-react"
 import type { Prompt, Tag } from "@/core/types"
 import { getPromptTags, recordCopy, recordLike } from "@/core/data-utils"
 import { TagList } from "@/features/tags/components/tag-badge"
@@ -20,9 +20,10 @@ interface ImageModalProps {
     allPrompts?: Prompt[]
     tags?: Tag[]
     onStatsChange?: (promptId: string, stats: { views: number; copies: number; likes: number }) => void
+    lockedPromptMessage: string
 }
 
-export function ImageModal({ prompt, open, onOpenChange, onSelectPrompt, allPrompts = [], tags = [], onStatsChange }: ImageModalProps) {
+export function ImageModal({ prompt, open, onOpenChange, onSelectPrompt, allPrompts = [], tags = [], onStatsChange, lockedPromptMessage }: ImageModalProps) {
     const [activePrompt, setActivePrompt] = useState<Prompt | null>(prompt)
     const [promptLoading, setPromptLoading] = useState(false)
     const [copied, setCopied] = useState(false)
@@ -46,7 +47,7 @@ export function ImageModal({ prompt, open, onOpenChange, onSelectPrompt, allProm
     }, [prompt])
 
     useEffect(() => {
-        if (!open || !prompt || prompt.content) {
+        if (!open || !prompt || prompt.content || prompt.contentPublic === false) {
             setPromptLoading(false)
             return
         }
@@ -140,11 +141,17 @@ export function ImageModal({ prompt, open, onOpenChange, onSelectPrompt, allProm
     if (!activePrompt) return null
 
     const promptTags = getPromptTags(activePrompt, tags)
+    const isPromptContentPublic = activePrompt.contentPublic !== false
 
     const handleCopyPrompt = async (e?: React.MouseEvent) => {
         e?.stopPropagation()
 
         try {
+            if (!isPromptContentPublic) {
+                toast.error("该 Prompt 内容暂未公开")
+                return
+            }
+
             if (!activePrompt.content) {
                 toast.error("Prompt 正在加载，请稍后再试")
                 return
@@ -323,16 +330,22 @@ export function ImageModal({ prompt, open, onOpenChange, onSelectPrompt, allProm
                                             <Terminal className="h-4 w-4" />
                                             Prompt
                                         </h3>
-                                        <div className="flex gap-2">
-                                            <span className="text-[10px] font-mono bg-muted px-2 py-0.5 rounded text-muted-foreground">ENGLISH</span>
-                                        </div>
                                     </div>
                                     <div className="relative group flex-1 min-h-[160px] md:min-h-0">
                                         <div
                                             className="h-full max-h-full bg-muted rounded-lg p-4 md:p-5 font-mono text-xs md:text-sm leading-relaxed text-foreground shadow-inner border border-border overflow-x-auto overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:bg-border/40 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-border/60"
                                             ref={setPromptScrollRef}
                                         >
-                                            {promptLoading ? (
+                                            {!isPromptContentPublic ? (
+                                                <div className="flex h-full min-h-[160px] flex-col items-center justify-center gap-3 text-center text-muted-foreground">
+                                                    <div className="rounded-full border border-border bg-background/70 p-3 shadow-sm">
+                                                        <Lock className="h-6 w-6" />
+                                                    </div>
+                                                    <p className="max-w-[280px] text-sm leading-relaxed">
+                                                        {lockedPromptMessage}
+                                                    </p>
+                                                </div>
+                                            ) : promptLoading ? (
                                                 <div className="flex h-full min-h-[120px] items-center justify-center gap-2 text-muted-foreground">
                                                     <Loader2 className="h-4 w-4 animate-spin" />
                                                     <span>正在加载 Prompt...</span>
@@ -348,7 +361,7 @@ export function ImageModal({ prompt, open, onOpenChange, onSelectPrompt, allProm
                                             variant="secondary"
                                             className="absolute top-2 right-2 md:opacity-0 md:group-hover:opacity-100 transition-opacity h-8 w-8 z-10"
                                             onClick={handleCopyPrompt}
-                                            disabled={promptLoading || !activePrompt.content}
+                                            disabled={!isPromptContentPublic || promptLoading || !activePrompt.content}
                                             aria-label="复制 Prompt"
                                         >
                                             {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
@@ -382,10 +395,10 @@ export function ImageModal({ prompt, open, onOpenChange, onSelectPrompt, allProm
                                 size="lg"
                                 className="w-full font-semibold h-11 md:h-12 text-sm md:text-base shadow-lg shadow-cyan-100/20 bg-gradient-to-r from-slate-200 via-white to-cyan-100 hover:from-white hover:via-slate-100 hover:to-cyan-50 text-slate-950 border-0"
                                 onClick={handleCopyPrompt}
-                                disabled={promptLoading || !activePrompt.content}
+                                disabled={!isPromptContentPublic || promptLoading || !activePrompt.content}
                             >
                                 <Sparkles className="h-5 w-5 mr-2" />
-                                {copied ? "Copied to Clipboard!" : "Generate with this Prompt"}
+                                {copied ? "Copied to Clipboard!" : isPromptContentPublic ? "Generate with this Prompt" : "Prompt 内容暂未公开"}
                             </Button>
                         </div>
                     </div>

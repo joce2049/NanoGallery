@@ -21,7 +21,11 @@ export async function GET(request: Request) {
 
     if (id) {
         const prompt = await JSONFileDB.getPromptById(id);
-        if (prompt && (isPublishedPrompt(prompt) || await isAuthenticated())) {
+        const authenticated = await isAuthenticated();
+        if (prompt && (isPublishedPrompt(prompt) || authenticated)) {
+            if (!authenticated && prompt.contentPublic === false) {
+                return NextResponse.json({ ...prompt, content: "" });
+            }
             return NextResponse.json(prompt);
         }
         return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -72,6 +76,7 @@ export async function POST(request: Request) {
             views: 0,
             copies: 0,
             likes: 0,
+            contentPublic: body.contentPublic !== false,
             status,
             publishedAt: isPublishedPrompt({ status })
                 ? new Date(body.publishedAt || Date.now())
@@ -114,6 +119,7 @@ export async function PUT(request: Request) {
         // Preserve original createdAt, update updatedAt
         const updatedPrompt = {
             ...body,
+            contentPublic: body.contentPublic !== false,
             status,
             createdAt: existing?.createdAt || new Date(body.createdAt || Date.now()),
             updatedAt: new Date(),
@@ -159,6 +165,7 @@ export async function PATCH(request: Request) {
         const updatedPrompt: Prompt = {
             ...existing,
             ...body,
+            contentPublic: "contentPublic" in body ? body.contentPublic !== false : existing.contentPublic !== false,
             status,
             createdAt: existing.createdAt,
             updatedAt: new Date(),

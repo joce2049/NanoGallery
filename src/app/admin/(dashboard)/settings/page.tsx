@@ -44,6 +44,16 @@ export default function SettingsPage() {
         }))
     }
 
+    const updatePrompt = (key: keyof PublicRuntimeSettings["prompt"], value: string) => {
+        setSettings((current) => ({
+            ...current,
+            prompt: {
+                ...current.prompt,
+                [key]: value,
+            },
+        }))
+    }
+
     const handleSave = async () => {
         setSaving(true)
         setMessage("")
@@ -127,6 +137,21 @@ export default function SettingsPage() {
                         <Label htmlFor="admin-title">后台登录说明</Label>
                         <Input id="admin-title" value={settings.site.adminTitle} onChange={(e) => updateSite("adminTitle", e.target.value)} />
                     </div>
+                </div>
+            </Card>
+
+            <Card className="p-6 space-y-5">
+                <div>
+                    <h2 className="text-lg font-semibold">Prompt 显示</h2>
+                    <p className="text-sm text-muted-foreground">控制前台作品中 Prompt 内容不可公开时的提示文案。</p>
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="locked-content-message">不公开提示文案</Label>
+                    <Textarea
+                        id="locked-content-message"
+                        value={settings.prompt.lockedContentMessage}
+                        onChange={(e) => updatePrompt("lockedContentMessage", e.target.value)}
+                    />
                 </div>
             </Card>
 

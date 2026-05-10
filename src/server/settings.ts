@@ -20,6 +20,7 @@ export function normalizeRuntimeSettings(input: unknown): RuntimeSettings {
     const data = (input && typeof input === "object" ? input : {}) as Partial<RuntimeSettings>
     const site: Partial<RuntimeSettings["site"]> = data.site || {}
     const upload: Partial<RuntimeSettings["upload"]> = data.upload || {}
+    const prompt: Partial<RuntimeSettings["prompt"]> = data.prompt || {}
     const defaults = defaultRuntimeSettings
 
     return {
@@ -38,6 +39,9 @@ export function normalizeRuntimeSettings(input: unknown): RuntimeSettings {
             thumbnailDimension: clampNumber(upload.thumbnailDimension, defaults.upload.thumbnailDimension, 128, 2000),
             webpQuality: clampNumber(upload.webpQuality, defaults.upload.webpQuality, 50, 100),
             thumbnailQuality: clampNumber(upload.thumbnailQuality, defaults.upload.thumbnailQuality, 40, 100),
+        },
+        prompt: {
+            lockedContentMessage: cleanText(prompt.lockedContentMessage, defaults.prompt.lockedContentMessage, 180),
         },
     }
 }

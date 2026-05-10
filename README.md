@@ -131,6 +131,22 @@ Supabase 环境变量为空时，应用会自动使用本地 JSON 统计模式�
 
 管理员登录使用 Cloudflare Turnstile 人机验证。前端只读取 `TURNSTILE_SITE_KEY`，后端使用 `TURNSTILE_SECRET_KEY` 调用 Cloudflare 校验 token；连续失败后仍会短暂冷却，降低撞库和暴力破解风险。
 
+### 内网域名与 Turnstile
+
+Turnstile 会校验浏览器当前访问的 hostname。真实 Key 如果只绑定公网域名，例如 `ibanana.cc.cd`，通过 `http://内网IP:3000` 访问后台时会验证失败。建议为内网也配置一个固定 hostname，例如：
+
+```text
+nano.lan
+```
+
+配置步骤：
+
+1. 在路由器、内网 DNS、AdGuard Home、Pi-hole 或客户端 hosts 文件中，把 `nano.lan` 指向部署 Nano Gallery 的内网 IP。
+2. 使用 `http://nano.lan:3000` 访问后台；如果通过内网反代，可直接使用 `http://nano.lan`。
+3. 在 Cloudflare Turnstile 的 Hostname Management 中加入 `nano.lan`。
+
+如果 Cloudflare 后台不接受 `.lan` 这类本地域名，可改用你拥有域名的内网子域名，例如 `nano.ibanana.cc.cd`，并在内网 DNS 中把它指向局域网 IP。
+
 ## Docker 部署
 
 如果宿主机数据目录不在仓库内，先在 `.env` 中指定挂载根目录：
@@ -139,6 +155,8 @@ Supabase 环境变量为空时，应用会自动使用本地 JSON 统计模式�
 NANO_HOST_STORAGE_DIR=/mnt/cachei/appdata/nanogallery
 TURNSTILE_SITE_KEY=your-cloudflare-turnstile-site-key
 TURNSTILE_SECRET_KEY=your-cloudflare-turnstile-secret-key
+PUID=1001
+PGID=1001
 ```
 
 容器内路径保持默认，不需要改：
@@ -162,6 +180,8 @@ storage/backups/
 ```
 
 `docker-compose.yml` 会把 `${NANO_HOST_STORAGE_DIR:-./storage}` 挂载到容器内的 `/app/storage` 子目录。新的写入会进入宿主机持久化目录，避免代码更新或镜像重建覆盖真实数据。
+
+如果部署在 Unraid/NAS 上，宿主机 appdata 目录通常不是 `1001:1001` 所有。此时把 `.env` 中的 `PUID` / `PGID` 改成拥有 `/mnt/cachei/appdata/nanogallery` 写权限的用户与用户组，或把该目录授权给容器用户。否则上传图片或发布 Prompt 时可能出现 `Upload failed`、`Failed to save prompt` 或 500 错误。
 
 ## 备份与恢复
 

@@ -6,6 +6,7 @@ export interface Prompt {
   id: string
   title: string
   content: string // Prompt 正文
+  contentPublic: boolean // Prompt 正文是否公开
   description?: string // 简短描述
   imageUrl: string // 示例图片
   thumbnailUrl?: string // 缩略图
