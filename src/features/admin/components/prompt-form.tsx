@@ -152,7 +152,7 @@ export function PromptForm({ initialData, isEditing = false }: PromptFormProps) 
             let nextImageUrl = imageUrl
             let nextThumbnailUrl = thumbnailUrl
 
-            if (pendingFile && shouldPublish) {
+            if (pendingFile) {
                 const uploaded = await uploadSelectedFile(pendingFile)
                 nextImageUrl = uploaded.imageUrl
                 nextThumbnailUrl = uploaded.thumbnailUrl
@@ -213,7 +213,7 @@ export function PromptForm({ initialData, isEditing = false }: PromptFormProps) 
                     {displayImageUrl ? (
                         <>
                             {previewUrl ? (
-                                // 本地预览不会写入服务器，只有状态为“已发布”并提交时才上传。
+                                // 本地预览不会写入服务器，提交表单时才会上传并保存。
                                 <img
                                     src={previewUrl}
                                     alt="Preview"
@@ -243,7 +243,7 @@ export function PromptForm({ initialData, isEditing = false }: PromptFormProps) 
                                 <X className="w-4 h-4" />
                             </button>
                             <div className="absolute inset-x-0 bottom-0 z-10 bg-black/60 text-white text-sm font-medium py-3 text-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                {previewUrl ? "本地预览，发布时上传" : "点击替换图片"}
+                                {previewUrl ? "本地预览，提交时上传" : "点击替换图片"}
                             </div>
                         </>
                     ) : (
@@ -283,7 +283,7 @@ export function PromptForm({ initialData, isEditing = false }: PromptFormProps) 
                             <span>{formatBytes(pendingImageMeta.size)}</span>
                         </div>
                         <p className="text-xs text-muted-foreground pt-2">
-                            当前仅本地预览；状态为“已发布”并提交后，才会压缩并写入服务器。
+                            当前仅本地预览；提交表单后，才会压缩并写入服务器。
                         </p>
                     </div>
                 )}
