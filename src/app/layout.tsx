@@ -4,6 +4,7 @@ import { ThemeProvider } from "next-themes"
 import { LayoutWrapper } from "@/features/shell/components/layout-wrapper"
 import { Toaster } from "@/shared/ui/sonner"
 import { getRuntimeSettings } from "@/server/settings"
+import { JSONFileDB } from "@/server/db"
 import "./globals.css"
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -35,16 +36,17 @@ export default async function RootLayout({
   children: React.ReactNode
 }>) {
   const { isAuthenticated } = await import("@/server/auth") // Dynamic import to avoid build issues if any
-  const [isLoggedIn, settings] = await Promise.all([
+  const [isLoggedIn, settings, categories] = await Promise.all([
     isAuthenticated(),
     getRuntimeSettings(),
+    JSONFileDB.getAllCategories(),
   ])
 
   return (
     <html lang="zh-CN" className="scroll-smooth" suppressHydrationWarning>
       <body className="font-sans antialiased" suppressHydrationWarning>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <LayoutWrapper isLoggedIn={isLoggedIn} siteName={settings.site.name}>
+          <LayoutWrapper isLoggedIn={isLoggedIn} siteName={settings.site.name} categories={categories}>
             {children}
           </LayoutWrapper>
           <Toaster position="top-center" closeButton />

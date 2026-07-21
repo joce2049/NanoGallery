@@ -30,12 +30,13 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: "Category name is required" }, { status: 400 });
         }
 
+        const parsedOrder = Number(body.order);
         const category: Category = {
             id,
             name,
             slug: String(body.slug || id).trim(),
             description: body.description || "",
-            order: Number(body.order ?? 999),
+            order: Number.isFinite(parsedOrder) ? parsedOrder : 999,
             enabled: body.enabled ?? true,
         };
 

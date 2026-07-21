@@ -28,9 +28,10 @@ import {
 interface MobileSidebarProps {
     isLoggedIn?: boolean
     siteName: string
+    initialCategories?: Category[]
 }
 
-function MobileSidebarContent({ isLoggedIn = false, siteName }: MobileSidebarProps) {
+function MobileSidebarContent({ isLoggedIn = false, siteName, initialCategories }: MobileSidebarProps) {
     const pathname = usePathname()
     const searchParams = useSearchParams()
     const [open, setOpen] = useState(false)
@@ -38,14 +39,16 @@ function MobileSidebarContent({ isLoggedIn = false, siteName }: MobileSidebarPro
     const [loginOpen, setLoginOpen] = useState(false)
     const [loggingOut, setLoggingOut] = useState(false)
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
-    const [rawCategories, setRawCategories] = useState<Category[]>([])
+    const [rawCategories, setRawCategories] = useState<Category[]>(initialCategories ?? [])
 
     useEffect(() => {
+        // 服务端已下发分类时无需再次请求，避免与桌面端侧边栏重复拉取
+        if (initialCategories) return
         fetch("/api/categories")
             .then(res => res.ok ? res.json() : [])
             .then((data: Category[]) => setRawCategories(data))
             .catch(() => setRawCategories([]))
-    }, [])
+    }, [initialCategories])
 
     const categories = getAllCategories(rawCategories)
     const currentCategory = searchParams.get("category")
@@ -292,14 +295,14 @@ function MobileSidebarContent({ isLoggedIn = false, siteName }: MobileSidebarPro
     )
 }
 
-export function MobileSidebar({ isLoggedIn, siteName }: MobileSidebarProps) {
+export function MobileSidebar({ isLoggedIn, siteName, initialCategories }: MobileSidebarProps) {
     return (
         <Suspense fallback={
             <Button variant="ghost" size="icon" className="lg:hidden">
                 <Menu className="h-5 w-5 opacity-50" />
             </Button>
         }>
-            <MobileSidebarContent isLoggedIn={isLoggedIn} siteName={siteName} />
+            <MobileSidebarContent isLoggedIn={isLoggedIn} siteName={siteName} initialCategories={initialCategories} />
         </Suspense>
     )
 }

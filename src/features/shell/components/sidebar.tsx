@@ -28,9 +28,10 @@ import {
 interface SidebarProps {
     isLoggedIn?: boolean
     siteName: string
+    initialCategories?: Category[]
 }
 
-function SidebarContent({ isLoggedIn = false, siteName }: SidebarProps) {
+function SidebarContent({ isLoggedIn = false, siteName, initialCategories }: SidebarProps) {
     const pathname = usePathname()
     const searchParams = useSearchParams()
     const { theme, setTheme } = useTheme()
@@ -39,18 +40,20 @@ function SidebarContent({ isLoggedIn = false, siteName }: SidebarProps) {
     const [loggingOut, setLoggingOut] = useState(false)
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
     const [mounted, setMounted] = useState(false)
-    const [rawCategories, setRawCategories] = useState<Category[]>([])
+    const [rawCategories, setRawCategories] = useState<Category[]>(initialCategories ?? [])
 
     useEffect(() => {
         setMounted(true)
     }, [])
 
     useEffect(() => {
+        // 服务端已下发分类时无需再次请求，避免与移动端侧边栏重复拉取
+        if (initialCategories) return
         fetch("/api/categories")
             .then(res => res.ok ? res.json() : [])
             .then((data: Category[]) => setRawCategories(data))
             .catch(() => setRawCategories([]))
-    }, [])
+    }, [initialCategories])
 
     const categories = getAllCategories(rawCategories)
     const currentCategory = searchParams.get("category")
@@ -290,10 +293,10 @@ function SidebarContent({ isLoggedIn = false, siteName }: SidebarProps) {
     )
 }
 
-export function Sidebar({ isLoggedIn, siteName }: SidebarProps) {
+export function Sidebar({ isLoggedIn, siteName, initialCategories }: SidebarProps) {
     return (
         <Suspense fallback={<div className="fixed left-0 top-0 z-40 h-screen w-64 border-r border-border/40 bg-sidebar" />}>
-            <SidebarContent isLoggedIn={isLoggedIn} siteName={siteName} />
+            <SidebarContent isLoggedIn={isLoggedIn} siteName={siteName} initialCategories={initialCategories} />
         </Suspense>
     )
 }

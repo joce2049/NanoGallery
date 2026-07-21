@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Image from "next/image"
-import { Dialog, DialogContent, DialogTitle } from "@/shared/ui/dialog"
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/shared/ui/dialog"
 import { Button } from "@/shared/ui/button"
 import { Copy, X, Heart, Sparkles, Terminal, Share2, Check, ChevronLeft, ChevronRight, Loader2, Lock } from "lucide-react"
 import type { Prompt, Tag } from "@/core/types"
@@ -11,6 +11,35 @@ import { TagList } from "@/features/tags/components/tag-badge"
 import { StatsBadge } from "@/features/stats/components/stats-badge"
 import { copyToClipboard, getImageUrl } from "@/shared/lib/utils"
 import { toast } from "sonner"
+
+// 记录本设备已点赞的 Prompt，避免重开弹窗后重复向服务端刷量
+const LIKED_STORAGE_KEY = "nano-liked-prompts"
+
+function readLikedSet(): Set<string> {
+    if (typeof window === "undefined") return new Set()
+    try {
+        const raw = window.localStorage.getItem(LIKED_STORAGE_KEY)
+        const ids = raw ? JSON.parse(raw) : []
+        return new Set<string>(Array.isArray(ids) ? ids : [])
+    } catch {
+        return new Set()
+    }
+}
+
+function hasLiked(id: string): boolean {
+    return readLikedSet().has(id)
+}
+
+function markLiked(id: string) {
+    if (typeof window === "undefined") return
+    try {
+        const set = readLikedSet()
+        set.add(id)
+        window.localStorage.setItem(LIKED_STORAGE_KEY, JSON.stringify(Array.from(set)))
+    } catch {
+        // 忽略隐私模式/配额等存储错误
+    }
+}
 
 interface ImageModalProps {
     prompt: Prompt | null
@@ -77,7 +106,7 @@ export function ImageModal({ prompt, open, onOpenChange, onSelectPrompt, allProm
         if (promptScrollRef) {
             promptScrollRef.scrollTop = 0
         }
-        setLiked(false)
+        setLiked(hasLiked(activePrompt.id))
 
         // Robust client-side deduplication using sessionStorage
         // This survives React StrictMode, remounts, and fast usage
@@ -182,7 +211,11 @@ export function ImageModal({ prompt, open, onOpenChange, onSelectPrompt, allProm
             const nextStats = { views: viewsCount, copies: copiesCount, likes: likesCount + 1 }
             setLikesCount(nextStats.likes)
             onStatsChange?.(activePrompt.id, nextStats)
-            recordLike(activePrompt.id)
+            // 每台设备只向服务端记一次，避免重开重复刷量
+            if (!hasLiked(activePrompt.id)) {
+                recordLike(activePrompt.id)
+                markLiked(activePrompt.id)
+            }
             toast.success("已点赞")
         } else {
             setLiked(false)
@@ -190,7 +223,31 @@ export function ImageModal({ prompt, open, onOpenChange, onSelectPrompt, allProm
             setLikesCount(nextStats.likes)
             onStatsChange?.(activePrompt.id, nextStats)
             toast("已取消点赞")
-            // Optional: recordUnlike if API supports it
+        }
+    }
+
+    const handleShare = async () => {
+        const url = `${window.location.origin}/prompt/${activePrompt.id}`
+
+        if (typeof navigator !== "undefined" && navigator.share) {
+            try {
+                await navigator.share({
+                    title: activePrompt.title,
+                    text: activePrompt.description || activePrompt.title,
+                    url,
+                })
+                return
+            } catch (error) {
+                if (error instanceof DOMException && error.name === "AbortError") return
+                // 系统分享失败则回退到复制链接
+            }
+        }
+
+        const ok = await copyToClipboard(url)
+        if (ok) {
+            toast.success("链接已复制到剪贴板")
+        } else {
+            toast.error("分享失败，请手动复制链接")
         }
     }
 
@@ -200,6 +257,9 @@ export function ImageModal({ prompt, open, onOpenChange, onSelectPrompt, allProm
                 className="!max-w-[95vw] !w-full md:!max-w-[1600px] !h-[92vh] p-0 gap-0 outline-none border border-white/30 dark:border-white/10 shadow-2xl shadow-slate-900/15 overflow-hidden rounded-xl bg-white/72 dark:bg-zinc-950/76 backdrop-blur-2xl"
                 showCloseButton={false}
             >
+                <DialogDescription className="sr-only">
+                    {activePrompt.title} 的图片与 Prompt 详情
+                </DialogDescription>
                 <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_360px] lg:grid-cols-[minmax(0,1fr)_420px] grid-rows-[38vh_minmax(0,1fr)] md:grid-rows-1 h-full min-h-0 w-full overflow-hidden">
                     {/* Left Panel: Image (Fixed/Centered) */}
                     <div className="relative h-full md:h-full min-h-0 w-full bg-muted/20 flex items-center justify-center p-3 md:p-6 overflow-hidden group">
@@ -251,6 +311,7 @@ export function ImageModal({ prompt, open, onOpenChange, onSelectPrompt, allProm
                         <button
                             onClick={() => onOpenChange(false)}
                             className="absolute top-6 left-6 p-3 rounded-full bg-black/10 hover:bg-black/20 text-foreground/80 hover:text-foreground dark:bg-white/10 dark:hover:bg-white/20 dark:text-foreground/80 dark:hover:text-foreground transition-all md:block hidden opacity-0 group-hover:opacity-100 duration-300 backdrop-blur-md z-50"
+                            aria-label="关闭"
                         >
                             <X className="h-6 w-6" />
                         </button>
@@ -284,12 +345,13 @@ export function ImageModal({ prompt, open, onOpenChange, onSelectPrompt, allProm
                                             <Button
                                                 variant="ghost"
                                                 size="icon"
-                                                className={`rounded-full hover:bg-pink-500/10 hover:text-pink-500 transition-colors ${liked ? "text-pink-500 bg-pink-500/10" : ""}`}
+                                                className={`rounded-full transition-colors hover:bg-pink-500/10 hover:text-pink-500 ${liked ? "text-pink-500 bg-pink-500/10" : "text-muted-foreground"}`}
                                                 onClick={handleLike}
+                                                aria-label={liked ? "取消点赞" : "点赞"}
                                             >
                                                 <Heart className={`h-5 w-5 md:h-6 md:w-6 ${liked ? "fill-current" : ""}`} />
                                             </Button>
-                                            <Button variant="ghost" size="icon" className="rounded-full">
+                                            <Button variant="ghost" size="icon" className="rounded-full text-muted-foreground" onClick={handleShare} aria-label="分享">
                                                 <Share2 className="h-5 w-5" />
                                             </Button>
                                         </div>

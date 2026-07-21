@@ -5,11 +5,11 @@ import { siteConfig } from "@/config"
 import { ImageModal } from "@/features/gallery/components/image-modal"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs"
 import type { TimePeriod, Prompt, Tag } from "@/core/types"
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { useRuntimeSettings } from "@/shared/lib/use-runtime-settings"
 
-export default function TopPage() {
+function TopPageContent() {
     const settings = useRuntimeSettings()
     const searchParams = useSearchParams()
     const router = useRouter()
@@ -19,6 +19,7 @@ export default function TopPage() {
     const [modalOpen, setModalOpen] = useState(false)
     const [topPrompts, setTopPrompts] = useState<Prompt[]>([])
     const [tags, setTags] = useState<Tag[]>([])
+    const [loading, setLoading] = useState(true)
 
     // Sync state when URL param changes
     useEffect(() => {
@@ -46,6 +47,7 @@ export default function TopPage() {
 
     useEffect(() => {
         const fetchData = async () => {
+            setLoading(true)
             try {
                 const [promptsRes, tagsRes] = await Promise.all([
                     fetch(`/api/prompts?sort=popular&period=${period}&limit=20`),
@@ -63,6 +65,8 @@ export default function TopPage() {
                 }
             } catch (e) {
                 console.error("Failed to fetch top prompts", e)
+            } finally {
+                setLoading(false)
             }
         }
 
@@ -106,16 +110,22 @@ export default function TopPage() {
 
                     {["today", "week", "month"].map((tabValue) => (
                         <TabsContent key={tabValue} value={tabValue} className="mt-8">
-                            <div className="masonry-grid">
-                                {topPrompts.map((prompt) => (
-                                    <div key={prompt.id} className="masonry-item relative group">
-                                        <ImageCard
-                                            prompt={prompt}
-                                            onCardClick={() => handleCardClick(prompt)}
-                                        />
-                                    </div>
-                                ))}
-                            </div>
+                            {topPrompts.length > 0 ? (
+                                <div className="masonry-grid">
+                                    {topPrompts.map((prompt) => (
+                                        <div key={prompt.id} className="masonry-item relative group">
+                                            <ImageCard
+                                                prompt={prompt}
+                                                onCardClick={() => handleCardClick(prompt)}
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="text-center py-20 text-muted-foreground">
+                                    {loading ? "加载中..." : "该时间段暂无数据"}
+                                </div>
+                            )}
                         </TabsContent>
                     ))}
                 </Tabs>
@@ -140,5 +150,13 @@ export default function TopPage() {
                 </div>
             </footer>
         </div>
+    )
+}
+
+export default function TopPage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-muted-foreground">加载中...</div>}>
+            <TopPageContent />
+        </Suspense>
     )
 }

@@ -5,6 +5,7 @@ import { Button } from "@/shared/ui/button"
 import { copyToClipboard } from "@/shared/lib/utils"
 import { Copy, Check } from "lucide-react"
 import { recordCopy } from "@/core/data-utils"
+import { toast } from "sonner"
 
 interface CopyPromptButtonProps {
     promptId: string
@@ -21,6 +22,9 @@ export function CopyPromptButton({ promptId, content, size = "sm" }: CopyPromptB
             recordCopy(promptId)
             setCopied(true)
             setTimeout(() => setCopied(false), 2000)
+            toast.success("Prompt 已复制")
+        } else {
+            toast.error("复制失败，请手动选择文本复制")
         }
     }
 

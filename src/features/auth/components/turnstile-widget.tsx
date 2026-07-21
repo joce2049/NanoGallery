@@ -28,6 +28,7 @@ type TurnstileConfig = {
 
 interface TurnstileWidgetProps {
     onTokenChange: (token: string) => void
+    onStatusChange?: (status: { enabled: boolean }) => void
     resetSignal?: number
     className?: string
 }
@@ -108,22 +109,26 @@ function getTurnstileErrorMessage(errorCode?: string | number) {
     return "人机验证加载失败，请刷新后重试"
 }
 
-export function TurnstileWidget({ onTokenChange, resetSignal, className }: TurnstileWidgetProps) {
+export function TurnstileWidget({ onTokenChange, onStatusChange, resetSignal, className }: TurnstileWidgetProps) {
     const containerRef = useRef<HTMLDivElement | null>(null)
     const widgetIdRef = useRef<string>("")
     const [config, setConfig] = useState<TurnstileConfig | null>(null)
     const [error, setError] = useState("")
+
+    const statusRef = useRef(onStatusChange)
+    statusRef.current = onStatusChange
 
     useEffect(() => {
         fetch("/api/auth/turnstile", { cache: "no-store" })
             .then((res) => res.ok ? res.json() : null)
             .then((data: TurnstileConfig | null) => {
                 setConfig(data)
-                if (!data?.enabled) {
-                    setError("Cloudflare Turnstile 尚未配置")
-                }
+                statusRef.current?.({ enabled: Boolean(data?.enabled) })
             })
-            .catch(() => setError("无法加载人机验证配置"))
+            .catch(() => {
+                statusRef.current?.({ enabled: false })
+                setError("无法加载人机验证配置")
+            })
     }, [])
 
     useEffect(() => {
@@ -169,6 +174,11 @@ export function TurnstileWidget({ onTokenChange, resetSignal, className }: Turns
             window.turnstile.reset(widgetIdRef.current)
         }
     }, [resetSignal, onTokenChange])
+
+    // 未配置 Turnstile 时不渲染占位框，避免登录区出现空白与死禁用
+    if (config && !config.enabled) {
+        return null
+    }
 
     return (
         <div className={className}>

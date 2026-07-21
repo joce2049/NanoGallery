@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import fs from "fs";
+import fs from "fs/promises";
 import { JSONFileDB } from "@/server/db";
 import { isAuthenticated } from "@/server/auth";
 import { uploadFileCandidates } from "@/server/storage-paths";
@@ -9,6 +9,15 @@ import {
     getRecentStatEvents,
     isSupabaseConfigured,
 } from "@/server/supabase";
+
+async function fileExists(filePath: string): Promise<boolean> {
+    try {
+        await fs.access(filePath);
+        return true;
+    } catch {
+        return false;
+    }
+}
 
 export async function GET() {
     if (!await isAuthenticated()) {
@@ -34,11 +43,13 @@ export async function GET() {
         !Number.isFinite(prompt.likes)
     ));
     const promptsMissingThumbnails = prompts.filter(prompt => !prompt.thumbnailUrl);
-    const promptsWithBrokenThumbnails = prompts.filter(prompt => {
-        if (!prompt.thumbnailUrl?.startsWith("/")) return false;
-        if (!prompt.thumbnailUrl.startsWith("/uploads/")) return false;
-        return !uploadFileCandidates(prompt.thumbnailUrl.replace("/uploads/", "")).some(candidate => fs.existsSync(candidate));
-    });
+    const brokenThumbnailChecks = await Promise.all(prompts.map(async prompt => {
+        if (!prompt.thumbnailUrl?.startsWith("/uploads/")) return null;
+        const candidates = uploadFileCandidates(prompt.thumbnailUrl.replace("/uploads/", ""));
+        const results = await Promise.all(candidates.map(fileExists));
+        return results.some(Boolean) ? null : prompt.id;
+    }));
+    const promptsWithBrokenThumbnails = brokenThumbnailChecks.filter((id): id is string => id !== null);
     const remoteMissingPromptIds = prompts
         .filter(prompt => !remoteStats.has(prompt.id))
         .map(prompt => prompt.id);
@@ -93,7 +104,7 @@ export async function GET() {
             unknownTags,
             promptsMissingStats: promptsMissingStats.map(prompt => prompt.id),
             promptsMissingThumbnails: promptsMissingThumbnails.map(prompt => prompt.id),
-            promptsWithBrokenThumbnails: promptsWithBrokenThumbnails.map(prompt => prompt.id),
+            promptsWithBrokenThumbnails,
             totals: prompts.reduce(
                 (acc, prompt) => ({
                     views: acc.views + (prompt.views || 0),

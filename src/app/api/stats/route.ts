@@ -7,6 +7,31 @@ import { JSONFileDB } from '@/server/db'
 const lastViewTime = new Map<string, number>()
 const VIEW_COOLDOWN_MS = 2000 // 2 seconds cooldown between views for same prompt
 
+// POST 无鉴权，加按 (事件+prompt+IP) 的冷却，抑制刷量与磁盘写放大 DoS
+const eventCooldown = new Map<string, number>()
+const EVENT_COOLDOWN_MS = 1500
+const MAX_COOLDOWN_KEYS = 20000
+
+function getClientIp(request: Request) {
+    return request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+        || request.headers.get('x-real-ip')?.trim()
+        || 'local'
+}
+
+// 冷却 Map 的 key 含可伪造的 IP，容量兜底避免被刷爆内存
+function pruneCooldownMap(map: Map<string, number>, now: number) {
+    if (map.size <= MAX_COOLDOWN_KEYS) return
+    for (const [key, time] of map.entries()) {
+        if (now - time > EVENT_COOLDOWN_MS) map.delete(key)
+    }
+    if (map.size > MAX_COOLDOWN_KEYS) {
+        const overflow = Array.from(map.entries())
+            .sort((a, b) => a[1] - b[1])
+            .slice(0, map.size - MAX_COOLDOWN_KEYS)
+        for (const [key] of overflow) map.delete(key)
+    }
+}
+
 export async function POST(request: Request) {
     try {
         const { promptId, eventType } = await request.json()
@@ -24,6 +49,16 @@ export async function POST(request: Request) {
                 { status: 400 }
             )
         }
+
+        // 冷却：同一 (事件, prompt, IP) 在窗口内只记一次
+        const now = Date.now()
+        const cooldownKey = `${eventType}:${promptId}:${getClientIp(request)}`
+        const lastEvent = eventCooldown.get(cooldownKey) || 0
+        if (now - lastEvent < EVENT_COOLDOWN_MS) {
+            return NextResponse.json({ success: true, throttled: true })
+        }
+        eventCooldown.set(cooldownKey, now)
+        pruneCooldownMap(eventCooldown, now)
 
         const statType = eventType === 'view' ? 'views'
             : eventType === 'copy' ? 'copies'
@@ -95,6 +130,7 @@ export async function GET(request: Request) {
 
                 if (now - lastTime > VIEW_COOLDOWN_MS) {
                     lastViewTime.set(promptId, now)
+                    pruneCooldownMap(lastViewTime, now)
                     await JSONFileDB.incrementPromptStat(promptId, 'views')
                 }
             }
@@ -117,6 +153,7 @@ export async function GET(request: Request) {
             // Only record if cooldown has passed
             if (now - lastTime > VIEW_COOLDOWN_MS) {
                 lastViewTime.set(promptId, now)
+                pruneCooldownMap(lastViewTime, now)
 
                 // Parallel record
                 await Promise.all([

@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 import type { MouseEvent } from "react"
 import type { Prompt, Tag } from "@/core/types"
 import { Badge } from "@/shared/ui/badge"
@@ -13,6 +14,7 @@ interface PopularTagsProps {
 }
 
 export function PopularTags({ prompts, tags, limit = 12, className = "" }: PopularTagsProps) {
+    const pathname = usePathname()
     const tagMap = new Map(tags.map(tag => [tag.id, tag]))
     const counts = new Map<string, number>()
 
@@ -33,6 +35,9 @@ export function PopularTags({ prompts, tags, limit = 12, className = "" }: Popul
     if (popularTags.length === 0) return null
 
     const handleTagNavigation = (href: string, event: MouseEvent<HTMLAnchorElement>) => {
+        // 仅在首页做原地筛选；其他页面（如 /search）让 Link 正常跳转回首页
+        if (pathname !== "/") return
+
         event.preventDefault()
         window.history.pushState({}, "", href)
         window.scrollTo({ top: 0, behavior: "smooth" })

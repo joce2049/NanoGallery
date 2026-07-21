@@ -33,7 +33,7 @@ export class JSONFileDB {
             await fs.access(PROMPTS_INDEX_FILE);
         } catch {
             const prompts = this.normalizePrompts(JSON.parse(JSON.stringify(seedPrompts)), true);
-            await this.writePromptStore(prompts);
+            await this.writeFullStore(prompts);
         }
     }
 
@@ -90,7 +90,36 @@ export class JSONFileDB {
         }));
     }
 
-    private static async writePromptStore(prompts: Prompt[]): Promise<void> {
+    /** 读取索引（不含正文），供统计/元数据类操作使用，避免读所有正文文件 */
+    private static async readIndexRecords(): Promise<PromptIndexRecord[]> {
+        await this.ensureDB();
+        const data = await fs.readFile(PROMPTS_INDEX_FILE, 'utf-8');
+        return JSON.parse(data) as PromptIndexRecord[];
+    }
+
+    /** 仅写索引文件（不触碰正文文件），按 updatedAt 倒序 */
+    private static async writeIndexRecords(records: PromptIndexRecord[]): Promise<void> {
+        const clean = records.map(({ content: _content, ...rest }) => rest);
+        clean.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+        await atomicWriteJson(PROMPTS_INDEX_FILE, clean);
+        await touchLocalStore();
+    }
+
+    /** 写单个正文文件 */
+    private static async writeContentFile(promptId: string, content: string): Promise<void> {
+        await fs.mkdir(PROMPT_CONTENT_DIR, { recursive: true });
+        await atomicWriteFile(path.join(PROMPT_CONTENT_DIR, this.contentFileFor(promptId)), content || "");
+    }
+
+    private static async deleteContentFiles(contentFiles: (string | undefined)[]): Promise<void> {
+        await Promise.all(contentFiles.map(async (filename) => {
+            if (!filename) return;
+            await fs.unlink(path.join(PROMPT_CONTENT_DIR, filename)).catch(() => undefined);
+        }));
+    }
+
+    /** 全量写入：仅用于首次种子初始化 */
+    private static async writeFullStore(prompts: Prompt[]): Promise<void> {
         await fs.mkdir(PROMPT_CONTENT_DIR, { recursive: true });
 
         const index: PromptIndexRecord[] = [];
@@ -121,9 +150,7 @@ export class JSONFileDB {
 
     static async getAllPrompts(options: { includeContent?: boolean } = {}): Promise<Prompt[]> {
         const includeContent = options.includeContent ?? true;
-        await this.ensureDB();
-        const data = await fs.readFile(PROMPTS_INDEX_FILE, 'utf-8');
-        const records: PromptIndexRecord[] = JSON.parse(data);
+        const records = await this.readIndexRecords();
         const prompts = await Promise.all(records.map(async (record) => ({
             ...record,
             content: includeContent ? await this.readPromptContent(record) : "",
@@ -132,40 +159,57 @@ export class JSONFileDB {
     }
 
     static async getPromptById(id: string): Promise<Prompt | undefined> {
-        const prompts = await this.getAllPrompts({ includeContent: true });
-        return prompts.find(p => p.id === id);
+        const records = await this.readIndexRecords();
+        const record = records.find(r => r.id === id);
+        if (!record) return undefined;
+
+        const content = await this.readPromptContent(record);
+        return this.normalizePrompts([{ ...record, content }], true)[0];
     }
 
     static async savePrompt(prompt: Prompt): Promise<void> {
         await this.withWriteLock(async () => {
-            const prompts = await this.getAllPrompts();
-            const index = prompts.findIndex(p => p.id === prompt.id);
+            const records = await this.readIndexRecords();
+            const contentFile = this.contentFileFor(prompt.id);
 
+            // 仅写这一个 prompt 的正文文件
+            await this.writeContentFile(prompt.id, prompt.content || "");
+
+            const { content: _content, ...rest } = prompt;
+            const record: PromptIndexRecord = { ...rest, contentFile };
+
+            const index = records.findIndex(r => r.id === prompt.id);
             if (index >= 0) {
-                prompts[index] = prompt;
+                records[index] = record;
             } else {
-                prompts.unshift(prompt);
+                records.unshift(record);
             }
 
-            await this.writePromptStore(prompts);
+            await this.writeIndexRecords(records);
         });
     }
 
     static async deletePrompt(id: string): Promise<void> {
         await this.withWriteLock(async () => {
-            let prompts = await this.getAllPrompts();
-            prompts = prompts.filter(p => p.id !== id);
-            await this.writePromptStore(prompts);
+            const records = await this.readIndexRecords();
+            const target = records.find(r => r.id === id);
+            const nextRecords = records.filter(r => r.id !== id);
+
+            await this.writeIndexRecords(nextRecords);
+            await this.deleteContentFiles([target?.contentFile]);
         });
     }
 
     static async deletePrompts(ids: string[]): Promise<number> {
         return this.withWriteLock(async () => {
             const idSet = new Set(ids);
-            const prompts = await this.getAllPrompts();
-            const nextPrompts = prompts.filter(prompt => !idSet.has(prompt.id));
-            await this.writePromptStore(nextPrompts);
-            return prompts.length - nextPrompts.length;
+            const records = await this.readIndexRecords();
+            const removed = records.filter(r => idSet.has(r.id));
+            const nextRecords = records.filter(r => !idSet.has(r.id));
+
+            await this.writeIndexRecords(nextRecords);
+            await this.deleteContentFiles(removed.map(r => r.contentFile));
+            return removed.length;
         });
     }
 
@@ -175,26 +219,27 @@ export class JSONFileDB {
     ): Promise<Prompt[]> {
         return this.withWriteLock(async () => {
             const idSet = new Set(ids);
-            const prompts = await this.getAllPrompts();
-            const updated: Prompt[] = [];
+            const records = await this.readIndexRecords();
+            const updatedRecords: PromptIndexRecord[] = [];
 
-            const nextPrompts = prompts.map(prompt => {
-                if (!idSet.has(prompt.id)) return prompt;
+            // 仅更新元数据（状态/分类/标签），不触碰任何正文文件
+            const nextRecords = records.map(record => {
+                if (!idSet.has(record.id)) return record;
 
-                const nextPrompt: Prompt = {
-                    ...prompt,
+                const nextRecord: PromptIndexRecord = {
+                    ...record,
                     ...updates,
                     updatedAt: new Date(),
-                    publishedAt: updates.status && isPublishedPrompt({ status: updates.status }) && !prompt.publishedAt
+                    publishedAt: updates.status && isPublishedPrompt({ status: updates.status }) && !record.publishedAt
                         ? new Date()
-                        : prompt.publishedAt,
+                        : record.publishedAt,
                 };
-                updated.push(nextPrompt);
-                return nextPrompt;
+                updatedRecords.push(nextRecord);
+                return nextRecord;
             });
 
-            await this.writePromptStore(nextPrompts);
-            return updated;
+            await this.writeIndexRecords(nextRecords);
+            return this.normalizePrompts(updatedRecords, false);
         });
     }
 
@@ -203,46 +248,48 @@ export class JSONFileDB {
         statType: 'views' | 'copies' | 'likes'
     ): Promise<Prompt | null> {
         return this.withWriteLock(async () => {
-            const prompts = await this.getAllPrompts();
-            const index = prompts.findIndex(p => p.id === id);
+            const records = await this.readIndexRecords();
+            const index = records.findIndex(r => r.id === id);
             if (index < 0) return null;
 
-            const prompt = prompts[index];
-            const nextPrompt = {
-                ...prompt,
-                [statType]: (prompt[statType] || 0) + 1,
-                updatedAt: prompt.updatedAt || new Date(),
+            const record = records[index];
+            const nextRecord: PromptIndexRecord = {
+                ...record,
+                [statType]: (Number(record[statType]) || 0) + 1,
+                // 计数不改动 updatedAt，避免每次浏览都打乱"最新"排序
+                updatedAt: record.updatedAt || new Date(),
             };
 
-            prompts[index] = nextPrompt;
-            await this.writePromptStore(prompts);
-            return nextPrompt;
+            records[index] = nextRecord;
+            // 仅重写索引，不读写任何正文文件
+            await this.writeIndexRecords(records);
+            return this.normalizePrompts([nextRecord], false)[0];
         });
     }
 
     static async getStats(promptId: string): Promise<{ views: number; copies: number; likes: number } | null> {
-        const prompts = await this.getAllPrompts({ includeContent: false });
-        const prompt = prompts.find(p => p.id === promptId);
-        if (!prompt) return null;
+        const records = await this.readIndexRecords();
+        const record = records.find(r => r.id === promptId);
+        if (!record) return null;
 
         return {
-            views: prompt.views || 0,
-            copies: prompt.copies || 0,
-            likes: prompt.likes || 0,
+            views: Number(record.views) || 0,
+            copies: Number(record.copies) || 0,
+            likes: Number(record.likes) || 0,
         };
     }
 
     static async getBatchStats(promptIds: string[]): Promise<Map<string, { views: number; copies: number; likes: number }>> {
-        const prompts = await this.getAllPrompts({ includeContent: false });
+        const records = await this.readIndexRecords();
         const requested = new Set(promptIds);
         const result = new Map<string, { views: number; copies: number; likes: number }>();
 
-        prompts.forEach(prompt => {
-            if (requested.has(prompt.id)) {
-                result.set(prompt.id, {
-                    views: prompt.views || 0,
-                    copies: prompt.copies || 0,
-                    likes: prompt.likes || 0,
+        records.forEach(record => {
+            if (requested.has(record.id)) {
+                result.set(record.id, {
+                    views: Number(record.views) || 0,
+                    copies: Number(record.copies) || 0,
+                    likes: Number(record.likes) || 0,
                 });
             }
         });
@@ -277,12 +324,13 @@ export class JSONFileDB {
             await touchLocalStore();
 
             if (oldId && oldId !== normalizedTag.id) {
-                const prompts = await this.getAllPrompts();
-                const nextPrompts = prompts.map(prompt => ({
-                    ...prompt,
-                    tags: prompt.tags.map(tagId => tagId === oldId ? normalizedTag.id : tagId),
+                // 标签改名：仅在索引里替换引用，不重写正文
+                const records = await this.readIndexRecords();
+                const nextRecords = records.map(record => ({
+                    ...record,
+                    tags: (record.tags || []).map(tagId => tagId === oldId ? normalizedTag.id : tagId),
                 }));
-                await this.writePromptStore(nextPrompts);
+                await this.writeIndexRecords(nextRecords);
             }
 
             return normalizedTag;

@@ -11,6 +11,7 @@ import { isPublishedPrompt, siteConfig } from "@/config"
 import { JSONFileDB } from "@/server/db"
 import { getImageUrl } from "@/shared/lib/utils"
 import { getRuntimeSettings } from "@/server/settings"
+import { getStats as getRemoteStats } from "@/server/supabase"
 
 interface PromptDetailPageProps {
     params: Promise<{ id: string }>
@@ -18,11 +19,12 @@ interface PromptDetailPageProps {
 
 export default async function PromptDetailPage({ params }: PromptDetailPageProps) {
     const { id } = await params
-    const [prompt, allPrompts, allTags, settings] = await Promise.all([
+    const [prompt, allPrompts, allTags, settings, remoteStats] = await Promise.all([
         JSONFileDB.getPromptById(id),
         JSONFileDB.getAllPrompts({ includeContent: false }),
         JSONFileDB.getAllTags(),
         getRuntimeSettings(),
+        getRemoteStats(id),
     ])
 
     if (!prompt || !isPublishedPrompt(prompt)) {
@@ -32,6 +34,12 @@ export default async function PromptDetailPage({ params }: PromptDetailPageProps
     const tags = getPromptTags(prompt, allTags)
     const relatedPrompts = getRelatedPrompts(prompt, allPrompts, 6)
     const isPromptContentPublic = prompt.contentPublic !== false
+    // 与首页一致：本地计数与 Supabase 计数取较大值
+    const mergedStats = {
+        views: Math.max(prompt.views || 0, remoteStats?.views || 0),
+        copies: Math.max(prompt.copies || 0, remoteStats?.copies || 0),
+        likes: Math.max(prompt.likes || 0, remoteStats?.likes || 0),
+    }
 
     return (
         <div className="min-h-screen bg-background">
@@ -62,7 +70,7 @@ export default async function PromptDetailPage({ params }: PromptDetailPageProps
                             {prompt.description && (
                                 <p className="text-lg text-muted-foreground mb-4">{prompt.description}</p>
                             )}
-                            <StatsBadge views={prompt.views} copies={prompt.copies} showLabel className="mb-4" />
+                            <StatsBadge views={mergedStats.views} copies={mergedStats.copies} likes={mergedStats.likes} showLabel className="mb-4" />
                         </div>
 
                         {/* Tags */}

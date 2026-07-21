@@ -24,6 +24,16 @@ export async function POST(request: Request) {
             webpQuality: settings.upload.webpQuality,
             thumbnailQuality: settings.upload.thumbnailQuality,
         };
+
+        // 先按 Content-Length 提前拒绝超大请求，避免把整个 body 读入内存
+        const contentLength = Number(request.headers.get("content-length") || 0);
+        if (contentLength && contentLength > uploadConfig.maxUploadSize + 1024 * 1024) {
+            return NextResponse.json(
+                { error: `File size must be ${settings.upload.maxUploadSizeMB}MB or less` },
+                { status: 413 }
+            );
+        }
+
         const formData = await request.formData();
         const file = formData.get("file") as File;
 

@@ -1,7 +1,7 @@
 
 "use client"
 
-import { useState } from "react"
+import { useCallback, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/shared/ui/button"
 import { Input } from "@/shared/ui/input"
@@ -14,10 +14,15 @@ export default function AdminLogin() {
     const [username, setUsername] = useState("")
     const [password, setPassword] = useState("")
     const [turnstileToken, setTurnstileToken] = useState("")
+    const [turnstileEnabled, setTurnstileEnabled] = useState(true)
     const [turnstileResetSignal, setTurnstileResetSignal] = useState(0)
     const [error, setError] = useState("")
     const [loading, setLoading] = useState(false)
     const router = useRouter()
+
+    const handleTurnstileStatus = useCallback(({ enabled }: { enabled: boolean }) => {
+        setTurnstileEnabled(enabled)
+    }, [])
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -85,13 +90,14 @@ export default function AdminLogin() {
                         </div>
                         <TurnstileWidget
                             onTokenChange={setTurnstileToken}
+                            onStatusChange={handleTurnstileStatus}
                             resetSignal={turnstileResetSignal}
                         />
                         {error && <p className="text-red-500 text-sm">{error}</p>}
                         <Button
                             type="submit"
                             className="w-full bg-white text-black hover:bg-zinc-200"
-                            disabled={loading || !turnstileToken}
+                            disabled={loading || (turnstileEnabled && !turnstileToken)}
                         >
                             {loading ? "登录中..." : "登录"}
                         </Button>

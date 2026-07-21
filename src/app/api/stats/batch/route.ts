@@ -14,7 +14,11 @@ export async function GET(request: Request) {
             )
         }
 
-        const promptIds = promptIdsParam.split(',')
+        const promptIds = promptIdsParam
+            .split(',')
+            .map(id => id.trim())
+            .filter(Boolean)
+            .slice(0, 200) // 限制单次批量数量，避免超大查询
 
         if (!isSupabaseConfigured) {
             const statsMap = await JSONFileDB.getBatchStats(promptIds)

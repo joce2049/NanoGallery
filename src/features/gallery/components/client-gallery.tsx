@@ -17,15 +17,10 @@ interface ClientGalleryProps {
     initialPrompts: Prompt[]
     categories: Category[]
     tags: Tag[]
-    periodStats?: {
-        today: Map<string, number>
-        week: Map<string, number>
-        month: Map<string, number>
-    }
     settings: PublicRuntimeSettings
 }
 
-export function ClientGallery({ initialPrompts, categories: initialCategories, tags, periodStats, settings }: ClientGalleryProps) {
+export function ClientGallery({ initialPrompts, categories: initialCategories, tags, settings }: ClientGalleryProps) {
     const searchParams = useSearchParams()
     const categoryParam = searchParams.get("category")
     const tagParam = searchParams.get("tag")
@@ -90,29 +85,7 @@ export function ClientGallery({ initialPrompts, categories: initialCategories, t
     }
 
     // 排序
-    // Custom sort logic based on period stats if available
-    let sortedPrompts = [...filteredPrompts]
-
-    if (['today', 'week', 'month'].includes(sortBy) && periodStats) {
-        const statsMap = periodStats[sortBy as keyof typeof periodStats]
-
-        // Filter out prompts with 0 views in this period (optional, but usually desired for "Trending")
-        // Or just sort them to bottom? Let's sort to bottom.
-
-        sortedPrompts.sort((a, b) => {
-            const viewsA = statsMap.get(a.id) || 0
-            const viewsB = statsMap.get(b.id) || 0
-
-            if (viewsA !== viewsB) {
-                return viewsB - viewsA // Higher views first
-            }
-            // Fallback to total views or latest?
-            return b.views - a.views
-        })
-    } else {
-        // Fallback to standard sort utils
-        sortedPrompts = sortPrompts(filteredPrompts, sortBy)
-    }
+    const sortedPrompts = sortPrompts(filteredPrompts, sortBy)
 
     // 分页
     const paginatedData = paginatePrompts(sortedPrompts, page, pageSize)
@@ -124,24 +97,10 @@ export function ClientGallery({ initialPrompts, categories: initialCategories, t
     // 显示的提示词列表（累积加载）
     const displayedPrompts = sortedPrompts.slice(0, page * pageSize)
 
-    const openPrompt = async (prompt: Prompt) => {
+    const openPrompt = (prompt: Prompt) => {
+        // 只负责选中并打开弹窗；正文由弹窗按需拉取（单一数据源，避免重复请求）
         setSelectedPrompt(prompt)
         setModalOpen(true)
-
-        if (prompt.content) return
-
-        try {
-            const res = await fetch(`/api/prompts?id=${encodeURIComponent(prompt.id)}`)
-            if (!res.ok) return
-
-            const fullPrompt = await res.json()
-            setSelectedPrompt(fullPrompt)
-            setPrompts(current => current.map(item => (
-                item.id === fullPrompt.id ? { ...item, ...fullPrompt } : item
-            )))
-        } catch {
-            // Keep the summary prompt visible if the detail request fails.
-        }
     }
 
     // 处理卡片点击

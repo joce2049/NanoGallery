@@ -1,7 +1,7 @@
 import { Suspense } from "react"
 import { ClientGallery } from "@/features/gallery/components/client-gallery"
 import { JSONFileDB } from "@/server/db"
-import { getAllStats, getPeriodStats } from "@/server/supabase"
+import { getAllStats } from "@/server/supabase"
 import { getPublishedPrompts } from "@/core/data-utils"
 import { getRuntimeSettings, toPublicRuntimeSettings } from "@/server/settings"
 
@@ -9,14 +9,11 @@ export const dynamic = 'force-dynamic' // Ensure we fetch fresh data on every re
 
 export default async function HomePage() {
   // Fetch prompts and all stats in parallel
-  const [prompts, categories, tags, statsMap, todayStats, weekStats, monthStats, settings] = await Promise.all([
+  const [prompts, categories, tags, statsMap, settings] = await Promise.all([
     JSONFileDB.getAllPrompts({ includeContent: false }),
     JSONFileDB.getAllCategories(),
     JSONFileDB.getAllTags(),
     getAllStats(),
-    getPeriodStats('today'),
-    getPeriodStats('week'),
-    getPeriodStats('month'),
     getRuntimeSettings()
   ])
 
@@ -42,11 +39,6 @@ export default async function HomePage() {
         initialPrompts={enrichedPrompts}
         categories={categories}
         tags={tags}
-        periodStats={{
-          today: todayStats,
-          week: weekStats,
-          month: monthStats
-        }}
         settings={toPublicRuntimeSettings(settings)}
       />
     </Suspense>

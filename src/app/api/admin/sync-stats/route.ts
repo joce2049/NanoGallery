@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { JSONFileDB } from "@/server/db";
 import { isAuthenticated } from "@/server/auth";
-import { isSupabaseConfigured, upsertPromptStats } from "@/server/supabase";
+import { getAllStats, isSupabaseConfigured, upsertPromptStats } from "@/server/supabase";
 
 export async function POST() {
     if (!await isAuthenticated()) {
@@ -15,13 +15,20 @@ export async function POST() {
         );
     }
 
-    const prompts = await JSONFileDB.getAllPrompts({ includeContent: false });
-    const stats = prompts.map(prompt => ({
-        prompt_id: prompt.id,
-        views: prompt.views || 0,
-        copies: prompt.copies || 0,
-        likes: prompt.likes || 0,
-    }));
+    const [prompts, remoteStats] = await Promise.all([
+        JSONFileDB.getAllPrompts({ includeContent: false }),
+        getAllStats(),
+    ]);
+    // 与远端取较大值，避免把已经更高的远端计数改小
+    const stats = prompts.map(prompt => {
+        const remote = remoteStats.get(prompt.id);
+        return {
+            prompt_id: prompt.id,
+            views: Math.max(prompt.views || 0, remote?.views || 0),
+            copies: Math.max(prompt.copies || 0, remote?.copies || 0),
+            likes: Math.max(prompt.likes || 0, remote?.likes || 0),
+        };
+    });
 
     const result = await upsertPromptStats(stats);
 

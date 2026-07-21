@@ -3,7 +3,8 @@ import { JSONFileDB } from "@/server/db"
 import { AdminPromptList } from "@/features/admin/components/admin-prompt-list"
 
 export default async function AdminDashboard() {
-    const prompts = await JSONFileDB.getAllPrompts({ includeContent: false })
+    // 加载正文，使后台列表能显示预览并支持按正文搜索
+    const prompts = await JSONFileDB.getAllPrompts({ includeContent: true })
     // Sort by updatedAt desc (latest modified first)
     prompts.sort((a, b) => {
         const dateA = new Date(a.updatedAt || a.createdAt).getTime()

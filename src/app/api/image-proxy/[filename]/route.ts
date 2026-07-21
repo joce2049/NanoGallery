@@ -33,6 +33,7 @@ export async function GET(
         return new NextResponse(new Uint8Array(fileBuffer), {
             headers: {
                 "Content-Type": contentType,
+                "X-Content-Type-Options": "nosniff",
                 "Cache-Control": "public, max-age=31536000, immutable",
             },
         });
@@ -53,8 +54,7 @@ function getContentType(ext: string): string {
             return "image/gif";
         case ".webp":
             return "image/webp";
-        case ".svg":
-            return "image/svg+xml";
+        // 不以 image/svg+xml 内联提供 SVG，避免存储型 XSS（上传通道只产出 WebP）
         default:
             return "application/octet-stream";
     }

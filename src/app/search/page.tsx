@@ -4,7 +4,7 @@ import { SearchBar } from "@/features/search/components/search-bar"
 import { PopularTags } from "@/features/gallery/components/popular-tags"
 import { SearchResultCard } from "@/features/search/components/search-result-card"
 import { Button } from "@/shared/ui/button"
-import { searchPrompts, sortPrompts } from "@/core/data-utils"
+import { sortPrompts } from "@/core/data-utils"
 import type { Prompt, SortBy, Tag } from "@/core/types"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useState, useEffect, Suspense } from "react"
@@ -22,6 +22,8 @@ function SearchPageContent() {
     const [sortBy, setSortBy] = useState<SortBy>(sortParam || "latest")
     const [prompts, setPrompts] = useState<Prompt[]>([])
     const [tags, setTags] = useState<Tag[]>([])
+    const [results, setResults] = useState<Prompt[]>([])
+    const [searching, setSearching] = useState(false)
 
     useEffect(() => {
         setQuery(queryParam)
@@ -48,8 +50,30 @@ function SearchPageContent() {
             })
     }, [])
 
-    const searchResults = query.trim() ? searchPrompts(prompts, query) : []
-    const sortedResults = sortPrompts(searchResults, sortBy)
+    // 服务端全文搜索（可命中正文），随 URL 中的 q 变化触发
+    useEffect(() => {
+        const trimmed = queryParam.trim()
+        if (!trimmed) {
+            setResults([])
+            setSearching(false)
+            return
+        }
+
+        const controller = new AbortController()
+        setSearching(true)
+        fetch(`/api/prompts?q=${encodeURIComponent(trimmed)}`, { signal: controller.signal })
+            .then(res => res.ok ? res.json() : [])
+            .then((data: Prompt[]) => setResults(Array.isArray(data) ? data : []))
+            .catch((error) => {
+                if (error instanceof DOMException && error.name === "AbortError") return
+                setResults([])
+            })
+            .finally(() => setSearching(false))
+
+        return () => controller.abort()
+    }, [queryParam])
+
+    const sortedResults = sortPrompts(results, sortBy)
 
     const handleSearch = (newQuery: string) => {
         setQuery(newQuery)
@@ -124,6 +148,10 @@ function SearchPageContent() {
                                 {sortedResults.map((prompt) => (
                                     <SearchResultCard key={prompt.id} prompt={prompt} query={query} />
                                 ))}
+                            </div>
+                        ) : searching ? (
+                            <div className="text-center py-20">
+                                <p className="text-muted-foreground">正在搜索...</p>
                             </div>
                         ) : (
                             <div className="text-center py-20">

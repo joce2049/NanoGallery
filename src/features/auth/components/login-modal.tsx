@@ -1,7 +1,7 @@
 
 "use client"
 
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/shared/ui/button"
 import { Input } from "@/shared/ui/input"
@@ -19,10 +19,15 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
     const [username, setUsername] = useState("")
     const [password, setPassword] = useState("")
     const [turnstileToken, setTurnstileToken] = useState("")
+    const [turnstileEnabled, setTurnstileEnabled] = useState(true)
     const [turnstileResetSignal, setTurnstileResetSignal] = useState(0)
     const [error, setError] = useState("")
     const [loading, setLoading] = useState(false)
     const router = useRouter()
+
+    const handleTurnstileStatus = useCallback(({ enabled }: { enabled: boolean }) => {
+        setTurnstileEnabled(enabled)
+    }, [])
 
     useEffect(() => {
         if (open) {
@@ -120,6 +125,7 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
                             </div>
                             <TurnstileWidget
                                 onTokenChange={setTurnstileToken}
+                                onStatusChange={handleTurnstileStatus}
                                 resetSignal={turnstileResetSignal}
                             />
                         </div>
@@ -133,7 +139,7 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
                         <div className="pt-2">
                             <Button
                                 type="submit"
-                                disabled={loading || !turnstileToken}
+                                disabled={loading || (turnstileEnabled && !turnstileToken)}
                                 className="w-full h-10 bg-gradient-to-r from-slate-200 via-white to-cyan-100 hover:from-white hover:via-slate-100 hover:to-cyan-50 text-slate-950 border-0 shadow-lg shadow-cyan-100/20 rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
                             >
                                 {loading ? (

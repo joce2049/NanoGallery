@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { JSONFileDB } from "@/server/db";
 import { isAuthenticated } from "@/server/auth";
 import type { Prompt, SortBy, TimePeriod } from "@/core/types";
-import { getPublishedPrompts, sortPrompts } from "@/core/data-utils";
+import { getPublishedPrompts, searchPrompts, sortPrompts } from "@/core/data-utils";
 import { getPeriodStats, isSupabaseConfigured } from "@/server/supabase";
 import { deletePromptMedia, deleteReplacedPromptMedia } from "@/server/media-cleanup";
 import { appDefaults, isPromptStatus, isPublishedPrompt } from "@/config";
@@ -14,6 +14,7 @@ const validPeriods = new Set(["today", "week", "month"]);
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
+    const q = searchParams.get("q");
     const sort = searchParams.get("sort") || "latest";
     const period = searchParams.get("period");
     const limitParam = searchParams.get("limit");
@@ -29,6 +30,17 @@ export async function GET(request: Request) {
             return NextResponse.json(prompt);
         }
         return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    // 全文搜索：在服务端对正文（含未随列表下发的 content）做匹配，返回时剥离正文以保护隐私
+    if (q && q.trim()) {
+        const all = await JSONFileDB.getAllPrompts({ includeContent: true });
+        let matched = searchPrompts(all, q);
+        matched = validSorts.has(sort) ? sortPrompts(matched, sort as SortBy) : sortPrompts(matched, "latest");
+        if (Number.isFinite(limit) && limit && limit > 0) {
+            matched = matched.slice(0, limit);
+        }
+        return NextResponse.json(matched.map((prompt) => ({ ...prompt, content: "" })));
     }
 
     const allPrompts = await JSONFileDB.getAllPrompts({ includeContent: false });
@@ -102,9 +114,8 @@ export async function PUT(request: Request) {
             return NextResponse.json({ error: "ID required" }, { status: 400 });
         }
 
-        // Fetch existing prompt to preserve createdAt
-        const prompts = await JSONFileDB.getAllPrompts();
-        const existing = prompts.find(p => p.id === body.id);
+        // Fetch existing prompt to preserve createdAt/stats
+        const existing = await JSONFileDB.getPromptById(body.id);
 
         if (!existing) {
             return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -116,13 +127,18 @@ export async function PUT(request: Request) {
             return NextResponse.json({ error: "发布前请先上传图片" }, { status: 400 });
         }
 
-        // Preserve original createdAt, update updatedAt
+        // Preserve original createdAt/stats, update updatedAt
         const updatedPrompt = {
+            ...existing,
             ...body,
             contentPublic: body.contentPublic !== false,
             status,
             createdAt: existing?.createdAt || new Date(body.createdAt || Date.now()),
             updatedAt: new Date(),
+            // 统计数据由服务端维护，编辑表单不提交这些字段，必须从既有记录保留，避免被清零
+            views: existing.views ?? 0,
+            copies: existing.copies ?? 0,
+            likes: existing.likes ?? 0,
             publishedAt: isPublishedPrompt({ status }) && !existing?.publishedAt
                 ? new Date()
                 : body.publishedAt
@@ -150,8 +166,7 @@ export async function PATCH(request: Request) {
             return NextResponse.json({ error: "ID required" }, { status: 400 });
         }
 
-        const prompts = await JSONFileDB.getAllPrompts();
-        const existing = prompts.find(p => p.id === body.id);
+        const existing = await JSONFileDB.getPromptById(body.id);
 
         if (!existing) {
             return NextResponse.json({ error: "Not found" }, { status: 404 });
