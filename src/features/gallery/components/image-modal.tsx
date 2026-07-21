@@ -72,7 +72,17 @@ export function ImageModal({ prompt, open, onOpenChange, onSelectPrompt, allProm
     }
 
     useEffect(() => {
-        setActivePrompt(prompt)
+        if (!prompt) {
+            setActivePrompt(null)
+            return
+        }
+        setActivePrompt(prev => {
+            // 同一 prompt 的 props 更新（如统计回传）不应清掉弹窗已拉取到的正文
+            if (prev && prev.id === prompt.id) {
+                return { ...prev, ...prompt, content: prompt.content || prev.content }
+            }
+            return prompt
+        })
     }, [prompt])
 
     useEffect(() => {
