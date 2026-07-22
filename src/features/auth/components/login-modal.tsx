@@ -67,12 +67,12 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[400px] border-none bg-black/20 backdrop-blur-xl shadow-2xl ring-1 ring-white/10 dark:ring-white/5 p-0 overflow-hidden">
+            <DialogContent className="sm:max-w-[400px] border-none bg-black/20 text-white backdrop-blur-xl shadow-2xl ring-1 ring-white/10 dark:ring-white/5 p-0 overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-white/18 via-slate-200/8 to-cyan-100/14 pointer-events-none" />
 
                 <div className="relative p-6 space-y-6">
                     <DialogHeader className="items-center text-center space-y-4">
-                        <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-white via-slate-200 to-cyan-100 flex items-center justify-center shadow-lg shadow-cyan-100/20">
+                        <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-white via-slate-200 to-cyan-100 flex items-center justify-center shadow-lg shadow-cyan-100/20">
                             <Sparkles className="h-6 w-6 text-slate-900" />
                         </div>
                         <div className="space-y-1">

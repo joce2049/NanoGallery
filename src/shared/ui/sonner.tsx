@@ -13,7 +13,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
       toastOptions={{
         classNames: {
           toast:
-            'border border-white/35 bg-white/78 text-slate-900 shadow-2xl shadow-slate-900/10 backdrop-blur-2xl dark:border-white/12 dark:bg-zinc-950/78 dark:text-zinc-50',
+            'border border-white/30 bg-white/78 text-slate-900 shadow-2xl shadow-slate-900/10 backdrop-blur-2xl dark:border-white/10 dark:bg-zinc-950/78 dark:text-zinc-50',
           title: 'text-sm font-semibold tracking-normal',
           description: 'text-xs text-slate-600 dark:text-zinc-300',
           success:

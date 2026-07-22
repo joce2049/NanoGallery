@@ -264,7 +264,7 @@ export function ImageModal({ prompt, open, onOpenChange, onSelectPrompt, allProm
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent
-                className="!max-w-[95vw] !w-full md:!max-w-[1600px] !h-[92vh] p-0 gap-0 outline-none border border-white/30 dark:border-white/10 shadow-2xl shadow-slate-900/15 overflow-hidden rounded-xl bg-white/72 dark:bg-zinc-950/76 backdrop-blur-2xl"
+                className="!max-w-[95vw] !w-full md:!max-w-[1600px] !h-[92vh] p-0 gap-0 outline-none border border-white/30 dark:border-white/10 shadow-2xl shadow-slate-900/15 overflow-hidden rounded-xl bg-white/78 dark:bg-zinc-950/78 backdrop-blur-2xl"
                 showCloseButton={false}
             >
                 <DialogDescription className="sr-only">
@@ -320,7 +320,7 @@ export function ImageModal({ prompt, open, onOpenChange, onSelectPrompt, allProm
                         {/* Close button for Desktop - floating on image area */}
                         <button
                             onClick={() => onOpenChange(false)}
-                            className="absolute top-6 left-6 p-3 rounded-full bg-black/10 hover:bg-black/20 text-foreground/80 hover:text-foreground dark:bg-white/10 dark:hover:bg-white/20 dark:text-foreground/80 dark:hover:text-foreground transition-all md:block hidden opacity-0 group-hover:opacity-100 duration-300 backdrop-blur-md z-50"
+                            className="absolute top-6 left-6 p-3 rounded-full bg-black/20 hover:bg-black/30 text-foreground/80 hover:text-foreground dark:bg-white/10 dark:hover:bg-white/20 dark:text-foreground/80 dark:hover:text-foreground transition-all md:block hidden opacity-0 group-hover:opacity-100 duration-300 backdrop-blur-md z-50"
                             aria-label="关闭"
                         >
                             <X className="h-6 w-6" />
@@ -337,7 +337,7 @@ export function ImageModal({ prompt, open, onOpenChange, onSelectPrompt, allProm
                     </div>
 
                     {/* Right Panel: Fixed information with prompt-only scrolling */}
-                    <div className="flex flex-col border-t md:border-t-0 md:border-l border-white/30 dark:border-white/10 min-h-0 bg-white/72 dark:bg-zinc-950/76 backdrop-blur-2xl h-full overflow-hidden">
+                    <div className="flex flex-col border-t md:border-t-0 md:border-l border-white/30 dark:border-white/10 min-h-0 bg-white/78 dark:bg-zinc-950/78 backdrop-blur-2xl h-full overflow-hidden">
 
                         {/* Mobile Close Bar */}
 
@@ -462,7 +462,7 @@ export function ImageModal({ prompt, open, onOpenChange, onSelectPrompt, allProm
                         </div>
 
                         {/* Sticky Footer */}
-                        <div className="p-3 md:p-6 border-t border-white/30 dark:border-white/10 bg-white/70 dark:bg-zinc-950/70 backdrop-blur-2xl flex flex-col gap-3 shrink-0">
+                        <div className="p-3 md:p-6 border-t border-white/30 dark:border-white/10 bg-white/78 dark:bg-zinc-950/78 backdrop-blur-2xl flex flex-col gap-3 shrink-0">
                             <Button
                                 size="lg"
                                 className="w-full font-semibold h-11 md:h-12 text-sm md:text-base shadow-lg shadow-cyan-100/20 bg-gradient-to-r from-slate-200 via-white to-cyan-100 hover:from-white hover:via-slate-100 hover:to-cyan-50 text-slate-950 border-0"

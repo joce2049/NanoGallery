@@ -5,7 +5,7 @@
 >
 > **技术栈**：Next.js 16 (App Router) · React 19 · Tailwind CSS v4（`@theme inline`）· shadcn/ui（new-york 中性色板）· next-themes（class 策略）· lucide-react · sonner · Radix UI。
 > **主题机制**：明暗通过根元素 `.dark` 类切换（`@custom-variant dark (&:is(.dark *))`）；颜色一律用语义令牌（`bg-background` / `text-foreground` / `text-muted-foreground` / `border-border` …），**禁止硬编码色值**。
-> **一条红线**：Dialog / AlertDialog 基类强制 `text-white`，浮层内任何交互元素（尤其 ghost / outline 按钮、纯 icon）必须**显式设置文字色**，否则明亮主题下白字白底不可见（详见「玻璃拟态与浮层规范」）。
+> **浮层文字色**：Dialog / AlertDialog 基类已统一为主题自适应 `text-foreground`（明暗都可读）；仅"强制深色 / 彩底表面"（登录弹窗、图上浮动控件）需逐元素显式给色（详见「玻璃拟态与浮层规范」§6.6）。
 >
 > **最后更新**：2026-07-22
 
@@ -308,7 +308,7 @@ hover: hover:from-white hover:via-slate-100 hover:to-cyan-50
 | 前台侧栏 Logo 方块 | `h-8 w-8 rounded-lg ...渐变 shadow-sm ring-1 ring-slate-300/70` | `sidebar.tsx:115` |
 | 移动端侧栏 Logo | 同上 | `mobile-sidebar.tsx:124` |
 | 后台侧栏 Logo | 同上 | `admin-sidebar.tsx:62` |
-| 登录框顶部图标块 | `h-12 w-12 rounded-2xl ...渐变 shadow-lg shadow-cyan-100/20`，内嵌 `Sparkles text-slate-900` | `login-modal.tsx:75-76` |
+| 登录框顶部图标块 | `h-12 w-12 rounded-xl ...渐变 shadow-lg shadow-cyan-100/20`，内嵌 `Sparkles text-slate-900` | `login-modal.tsx:75-76` |
 | 登录框整层微光 | `from-white/18 via-slate-200/8 to-cyan-100/14`（透明叠加，`pointer-events-none`） | `login-modal.tsx:71` |
 | 登录框标题文字 | `bg-clip-text text-transparent bg-gradient-to-br from-white to-white/70` | `login-modal.tsx:79` |
 
@@ -676,10 +676,10 @@ shadow-inner border border-border overflow-x-auto overflow-y-auto
 | `rounded-md` | `var(--radius-md)` | 8px | `button.tsx:10,27,28` |
 | `rounded-lg` | `var(--radius-lg)` = `--radius` | 10px | `image-card.tsx:31`、`image-modal.tsx:408` |
 | `rounded-xl` | `var(--radius-xl)` | 14px | `card.tsx:12`、`dialog.tsx:63`、`alert-dialog.tsx:57`、`image-modal.tsx:267` |
-| `rounded-2xl` | `1rem`（Tailwind 默认） | 16px | `login-modal.tsx:75` 图标块 |
+| `rounded-2xl` | `1rem`（Tailwind 默认） | 16px | （当前未使用） |
 | `rounded-full` | `9999px` | 全圆/胶囊 | 见 §1.3 |
 
-> 约定：改站点整体圆角风格只需调 `--radius` 一处，`sm/md/lg/xl` 会同步平移；不要在组件里散写 `rounded-[10px]` 之类硬编码值绕过该系统。`rounded-xs` 和 `rounded-2xl` 走的是 Tailwind 内置刻度，不随 `--radius` 变化，改它们不会影响弹窗关闭按钮/登录图标块。
+> 约定：改站点整体圆角风格只需调 `--radius` 一处，`sm/md/lg/xl` 会同步平移；不要在组件里散写 `rounded-[10px]` 之类硬编码值绕过该系统。`rounded-xs` 和 `rounded-2xl` 走的是 Tailwind 内置刻度，不随 `--radius` 变化，改它们不会影响弹窗关闭按钮（登录图标块已改用 rounded-xl）。
 
 #### 1.2 各组件圆角归属速查
 
@@ -836,15 +836,13 @@ ImageModal 与 Toast 是全站玻璃拟态的两处基准，务必成套复用�
 
 | 层 | 底色（亮/暗） | 模糊 | 描边（亮/暗） | 阴影 | 来源 |
 |---|---|---|---|---|---|
-| ImageModal 容器 | `bg-white/72` / `dark:bg-zinc-950/76` | `backdrop-blur-2xl`(40px) | `border-white/30` / `dark:border-white/10` | `shadow-2xl shadow-slate-900/15` | `image-modal.tsx:267` |
-| ImageModal 右面板 | `bg-white/72` / `dark:bg-zinc-950/76` | `backdrop-blur-2xl` | `border-white/30` / `dark:border-white/10`（`border-t md:border-l`） | — | `image-modal.tsx:340` |
-| ImageModal 页脚 | `bg-white/70` / `dark:bg-zinc-950/70` | `backdrop-blur-2xl` | `border-white/30` / `dark:border-white/10`（`border-t`） | — | `image-modal.tsx:465` |
-| Toast 主体 | `bg-white/78` / `dark:bg-zinc-950/78` | `backdrop-blur-2xl` | `border-white/35` / `dark:border-white/12` | `shadow-2xl shadow-slate-900/10` | `sonner.tsx:16` |
-| shadcn Dialog（原生） | `bg-black/20` | `backdrop-blur-xl`(24px) | `border-white/10` + `ring-1 ring-white/10 dark:ring-white/5` | `shadow-2xl` | `dialog.tsx:63` |
+| ImageModal 容器 | `bg-white/78` / `dark:bg-zinc-950/78` | `backdrop-blur-2xl`(40px) | `border-white/30` / `dark:border-white/10` | `shadow-2xl shadow-slate-900/15` | `image-modal.tsx:267` |
+| ImageModal 右面板 | `bg-white/78` / `dark:bg-zinc-950/78` | `backdrop-blur-2xl` | `border-white/30` / `dark:border-white/10`（`border-t md:border-l`） | — | `image-modal.tsx:340` |
+| ImageModal 页脚 | `bg-white/78` / `dark:bg-zinc-950/78` | `backdrop-blur-2xl` | `border-white/30` / `dark:border-white/10`（`border-t`） | — | `image-modal.tsx:465` |
+| Toast 主体 | `bg-white/78` / `dark:bg-zinc-950/78` | `backdrop-blur-2xl` | `border-white/30` / `dark:border-white/10` | `shadow-2xl shadow-slate-900/10` | `sonner.tsx:16` |
+| Dialog / AlertDialog 基类 | `bg-background/90`（**主题自适应**，`text-foreground`） | `backdrop-blur-xl`(24px) | `border-border/60` / `dark:border-white/10` + `ring-1 ring-black/5 dark:ring-white/5` | `shadow-2xl` | `dialog.tsx:63`、`alert-dialog.tsx:57` |
 
-> 关键坑一（两套配方）：项目里存在两套弹窗玻璃配方——业务用 ImageModal（白底 72%/40px 模糊/双色白边）与 shadcn 原生 Dialog（黑底 20%/24px 模糊/`ring-1` 高光）差异明显。新建业务浮层请对齐 ImageModal 配方（`backdrop-blur-2xl` + `bg-white/72 dark:bg-zinc-950/76` + `border-white/30 dark:border-white/10`），不要直接用 `DialogContent` 默认样式，否则暗黑玻璃底与站点亮面风格不一致。
->
-> 关键坑二（浮层文字色继承）：shadcn `DialogContent` 基类里写死了 `text-white`（`dialog.tsx:63`）。ImageModal 的容器 className（`image-modal.tsx:267`）**没有覆盖**这个文字色，所以整个白玻璃面板的默认继承色是白色——在白底上等于不可见。因此 ImageModal 内每个文字/按钮都必须显式声明颜色：标题/正文用 `text-foreground`、`text-muted-foreground`（如 `image-modal.tsx:351,370`），渐变主按钮用 `text-slate-950`（`image-modal.tsx:468`）。凡是基于 `DialogContent` 做亮面浮层，一律不能依赖文字色继承，必须逐元素显式给色。
+> **统一标准（2026-07-22）**：磨砂玻璃**只有一个配方**——`backdrop-blur-2xl` + `bg-white/78 dark:bg-zinc-950/78` + `border-white/30 dark:border-white/10`（ImageModal 各面板与 Toast 均已对齐）。Dialog / AlertDialog **基类已统一为主题自适应** `bg-background/90 text-foreground`（不再是深色强制白字），新建业务浮层可直接用它、明暗都可读。全站唯一"强制深色"的浮层是登录弹窗（`bg-black/20` + 显式 `text-white`）。浮层内文字色规则见 §6.6。
 
 ---
 
@@ -864,8 +862,8 @@ ImageModal 与 Toast 是全站玻璃拟态的两处基准，务必成套复用�
 | `blur-3xl`（内容滤镜，非 backdrop） | 图片氛围背景 | `blur(64px)` |
 | `border`（默认线宽） | 边框 | `1px` |
 | `ring-1` | 外描边环 | `1px`（box-shadow 实现） |
-| `rounded-xl` | 浮层主圆角 | `0.75rem = 12px`（若主题覆写 `--radius` 则以变量为准） |
-| `rounded-2xl` | 登录图标容器 | `1rem = 16px` |
+| `rounded-xl` | 浮层主圆角 | `0.875rem = 14px`（若主题覆写 `--radius` 则以变量为准） |
+| `rounded-2xl` | （当前未使用） | `1rem = 16px` |
 | `rounded-full` | 圆形按钮 | `9999px` |
 | `rounded-xs` | 关闭按钮 | `0.125rem = 2px` |
 | `shadow-2xl` | 浮层主阴影 | `0 25px 50px -12px rgb(0 0 0 / 0.25)` |
@@ -911,17 +909,17 @@ p-0 gap-0 outline-none
 border border-white/30 dark:border-white/10
 shadow-2xl shadow-slate-900/15
 overflow-hidden rounded-xl
-bg-white/72 dark:bg-zinc-950/76
+bg-white/78 dark:bg-zinc-950/78
 backdrop-blur-2xl
 ```
 
 | 配方项 | 浅色 | 深色 |
 |---|---|---|
-| 底色 | `bg-white/72` = `#ffffff` @ 72% | `bg-zinc-950/76` = `oklch(0.141 0.005 285.823)` ≈ `#09090b` @ 76% |
+| 底色 | `bg-white/78` = `#ffffff` @ 78% | `bg-zinc-950/78` = `oklch(0.141 0.005 285.823)` ≈ `#09090b` @ 78% |
 | 磨砂 | `backdrop-blur-2xl` = `blur(40px)` | 同左 |
 | 边框 | `border-white/30`（`#ffffff` @ 30%，`1px`） | `border-white/10`（`#ffffff` @ 10%，`1px`） |
 | 阴影 | `shadow-2xl` + 着色 `shadow-slate-900/15`（阴影色 = `slate-900` ≈ `#0f172a` @ 15%） | 同左 |
-| 圆角 | `rounded-xl` = 12px | 同左 |
+| 圆角 | `rounded-xl` = 14px | 同左 |
 
 注意此处用 `!max-w-` / `!w-` / `!h-` 的 `!`（important）覆盖 dialog 基类的 `max-w-[calc(100%-2rem)] sm:max-w-lg`，并用 `showCloseButton={false}`（`image-modal.tsx:268`）关掉基类右上角关闭按钮，改由内部自绘浮动关闭按钮（见 3.3）。
 
@@ -929,8 +927,8 @@ backdrop-blur-2xl
 
 右信息栏与吸底 Footer 复用配方 A，但吸底 Footer 的底色透明度略降到 `/70`：
 
-- 右栏：`bg-white/72 dark:bg-zinc-950/76 backdrop-blur-2xl`，分隔线 `border-t md:border-t-0 md:border-l border-white/30 dark:border-white/10`（来源 `image-modal.tsx:340`）
-- 吸底 Footer：`bg-white/70 dark:bg-zinc-950/70 backdrop-blur-2xl`，顶边 `border-t border-white/30 dark:border-white/10`（来源 `image-modal.tsx:465`）
+- 右栏：`bg-white/78 dark:bg-zinc-950/78 backdrop-blur-2xl`，分隔线 `border-t md:border-t-0 md:border-l border-white/30 dark:border-white/10`（来源 `image-modal.tsx:340`）
+- 吸底 Footer：`bg-white/78 dark:bg-zinc-950/78 backdrop-blur-2xl`，顶边 `border-t border-white/30 dark:border-white/10`（来源 `image-modal.tsx:465`）
 
 规则：配方 A 的分隔线在浅色恒为 `white/30`、深色恒为 `white/10`；底色透明度允许在 `72%`（主面）与 `70%`（叠加层如 Footer）之间取值，磨砂固定 `2xl`。
 
@@ -941,10 +939,10 @@ backdrop-blur-2xl
 | 按钮 | 类名要点 | 来源 |
 |---|---|---|
 | 左右翻页 | `bg-black/20 hover:bg-black/30 dark:bg-white/10 dark:hover:bg-white/20 backdrop-blur-md rounded-full`，文字 `text-white md:text-foreground/80 md:hover:text-foreground` | `image-modal.tsx:304,313` |
-| 桌面关闭（浮于图上） | `bg-black/10 hover:bg-black/20 dark:bg-white/10 dark:hover:bg-white/20 backdrop-blur-md rounded-full`，`text-foreground/80 hover:text-foreground dark:text-foreground/80` | `image-modal.tsx:323` |
+| 桌面关闭（浮于图上） | `bg-black/20 hover:bg-black/30 dark:bg-white/10 dark:hover:bg-white/20 backdrop-blur-md rounded-full`，`text-foreground/80 hover:text-foreground dark:text-foreground/80` | `image-modal.tsx:323` |
 | 移动关闭（常驻） | `fixed top-4 right-4 bg-black/60 hover:bg-black/80 text-white backdrop-blur-md rounded-full z-[100] shadow-lg` | `image-modal.tsx:332` |
 
-规则：图上浮动控件统一 `backdrop-blur-md`（12px）+ `rounded-full`；桌面态用低透明度黑/白（翻页 `black/20~30`、关闭 `black/10~20`；深色两者均 `white/10~20`）配 `md:opacity-0 group-hover:opacity-100`（hover 才显形），移动端关闭按钮用高对比 `black/60` 且常驻可见、层级抬到 `z-[100]`。
+规则：图上浮动控件统一 `backdrop-blur-md`（12px）+ `rounded-full`；桌面态用低透明度黑/白（翻页 `black/20~30`、关闭 `black/20~30`；深色两者均 `white/10~20`）配 `md:opacity-0 group-hover:opacity-100`（hover 才显形），移动端关闭按钮用高对比 `black/60` 且常驻可见、层级抬到 `z-[100]`。
 
 #### 3.4 Toast（Sonner）
 
@@ -993,17 +991,17 @@ Sonner 同时通过 `style` 注入 CSS 变量兜底（`sonner.tsx:30-38`），�
 | `--error-text` | `var(--foreground)` |
 | `--error-border` | `color-mix(in srgb, #fecaca 80%, transparent)` |
 
-### 4. 玻璃配方 B —— 深色调玻璃（强制白字）
+### 4. 浮层基类 —— 主题自适应（Dialog / AlertDialog 统一）
 
-固定深色半透明底 + `text-white`，用于 Dialog/AlertDialog 的**默认基类**与登录弹窗。此配方是"红线规则"的来源。
+> **2026-07-22 起统一**：`DialogContent` 与 `AlertDialogContent` 基类**改为主题自适应**（原为固定深色 `bg-black/20 text-white`）。两者字符串一致，明亮=白玻璃深字、暗色=近黑玻璃浅字，**默认继承色即可读**，不再是"红线坑"的来源。
 
 #### 4.1 Dialog / AlertDialog 基类（两者字符串完全相同）
 
 来源：`src/shared/ui/dialog.tsx:63`、`src/shared/ui/alert-dialog.tsx:57`
 
 ```
-border-white/10 bg-black/20 text-white shadow-2xl backdrop-blur-xl
-ring-1 ring-white/10 dark:ring-white/5
+border-border/60 bg-background/90 text-foreground shadow-2xl backdrop-blur-xl
+ring-1 ring-black/5 dark:border-white/10 dark:ring-white/5
 data-[state=open]:animate-in data-[state=closed]:animate-out
 data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0
 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95
@@ -1012,27 +1010,26 @@ max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%]
 gap-4 rounded-xl border p-6 duration-200 sm:max-w-lg
 ```
 
-| 配方项 | 值 |
-|---|---|
-| 底色 | `bg-black/20` = `oklch(0 0 0 / 0.20)` ≈ `#000000` @ 20%（**不随主题变化**） |
-| 文字 | `text-white`（**强制白字，全局继承**） |
-| 磨砂 | `backdrop-blur-xl` = `blur(24px)` |
-| 边框 | `border-white/10`（`#ffffff` @ 10%，`1px`） |
-| 环 | `ring-1 ring-white/10`，深色 `dark:ring-white/5`（box-shadow 描边，`1px`） |
-| 阴影 | `shadow-2xl` |
-| 圆角 / 内边距 | `rounded-xl`(12px) / `p-6`(24px) |
-| 进出 | `fade` + `zoom-95`（`zoom-out-95`/`zoom-in-95` = 缩放至 95%），`duration-200` |
+| 配方项 | 明亮 | 暗色 |
+|---|---|---|
+| 底色 | `bg-background/90`（`#ffffff` @ 90%） | 近黑 `#0a0a0a` @ 90% |
+| 文字 | `text-foreground`（近黑，**主题自适应**） | 近白 |
+| 磨砂 | `backdrop-blur-xl` = `blur(24px)` | 同 |
+| 边框 | `border-border/60`（主题边框 @ 60%，`1px`） | `dark:border-white/10` |
+| 环 | `ring-1 ring-black/5`（`1px`） | `dark:ring-white/5` |
+| 圆角 / 内边距 | `rounded-xl`(14px) / `p-6`(24px) | 同 |
+| 进出 | `fade` + `zoom-95`（缩放至 95%），`duration-200` | 同 |
 
-进出动画多一层 `zoom`（相较 Sheet/Overlay 只有 fade/slide）。基类右上角关闭按钮：`rounded-xs opacity-70 hover:opacity-100`，图标匹配 `[&_svg:not([class*='size-'])]:size-4`（`dialog.tsx:72`）。
+因基类默认 `text-foreground`，浮层内未显式设色的文本/按钮会继承主题前景色、明暗都可读——**这消除了旧版 `text-white` 继承坑**。唯一例外是"强制深色表面"的登录弹窗（4.2）。基类右上角关闭按钮：`rounded-xs opacity-70 hover:opacity-100`，图标 `[&_svg:not([class*='size-'])]:size-4`（`dialog.tsx:72`）。
 
-#### 4.2 登录弹窗（配方 B + 双层渐变高光）
+#### 4.2 登录弹窗（唯一"强制深色"浮层）
 
 来源：`src/features/auth/components/login-modal.tsx:70-71`
 
-外层 DialogContent 覆盖基类边框为无边框，仅留 `ring`：
+登录弹窗是全站**唯一刻意保持深色**的浮层：基类改主题自适应后，它把底色固定为深色 `bg-black/20` 并**自带 `text-white`**（靠这行显式白字维持"深底浅字"），无边框、仅留 `ring`，内部文字/控件全部显式设色（见下）：
 
 ```
-sm:max-w-[400px] border-none bg-black/20 backdrop-blur-xl
+sm:max-w-[400px] border-none bg-black/20 text-white backdrop-blur-xl
 shadow-2xl ring-1 ring-white/10 dark:ring-white/5
 p-0 overflow-hidden
 ```
@@ -1051,7 +1048,7 @@ pointer-events-none
 | via | `slate-200` ≈ `#e2e8f0` | 8% |
 | to | `cyan-100` ≈ `#cffafe` | 14% |
 
-登录弹窗内所有文字/输入均**显式指定颜色**以适配深底：标题用渐变裁字 `bg-clip-text text-transparent bg-gradient-to-br from-white to-white/70`（`login-modal.tsx:79`），描述 `text-zinc-400`（`#a1a1aa`，`login-modal.tsx:82`），Label `text-zinc-400`（`login-modal.tsx:91,109`），图标 `text-zinc-500` / 聚焦 `group-focus-within:text-cyan-100`（`login-modal.tsx:95,113`），输入框 `bg-white/5 border-white/10 text-white placeholder:text-zinc-600 focus:bg-white/10 focus:border-cyan-100/60 rounded-xl`（`login-modal.tsx:103,121`）。图标容器 `rounded-2xl bg-gradient-to-br from-white via-slate-200 to-cyan-100`，内嵌图标 `text-slate-900`（`login-modal.tsx:75-76`）。主按钮为品牌浅色渐变 `from-slate-200 via-white to-cyan-100 text-slate-950`（深字压浅底，`rounded-xl`，`login-modal.tsx:143`）。错误条 `text-red-400 bg-red-500/10 border-red-500/20`（`login-modal.tsx:134`）。
+登录弹窗内所有文字/输入均**显式指定颜色**以适配深底：标题用渐变裁字 `bg-clip-text text-transparent bg-gradient-to-br from-white to-white/70`（`login-modal.tsx:79`），描述 `text-zinc-400`（`#a1a1aa`，`login-modal.tsx:82`），Label `text-zinc-400`（`login-modal.tsx:91,109`），图标 `text-zinc-500` / 聚焦 `group-focus-within:text-cyan-100`（`login-modal.tsx:95,113`），输入框 `bg-white/5 border-white/10 text-white placeholder:text-zinc-600 focus:bg-white/10 focus:border-cyan-100/60 rounded-xl`（`login-modal.tsx:103,121`）。图标容器 `rounded-xl bg-gradient-to-br from-white via-slate-200 to-cyan-100`，内嵌图标 `text-slate-900`（`login-modal.tsx:75-76`）。主按钮为品牌浅色渐变 `from-slate-200 via-white to-cyan-100 text-slate-950`（深字压浅底，`rounded-xl`，`login-modal.tsx:143`）。错误条 `text-red-400 bg-red-500/10 border-red-500/20`（`login-modal.tsx:134`）。
 
 > 注意：登录弹窗未传 `showCloseButton={false}`，故仍带基类右上角 `text-white` 关闭按钮（深底可见，无需覆写）。
 
@@ -1076,24 +1073,18 @@ data-[state=closed]:duration-300 data-[state=open]:duration-500
 | 进出 | `slide-in/out`（无 zoom、无 fade），开 `500ms` / 关 `300ms` |
 | 标题色 | `text-foreground`（`sheet.tsx:111`，显式，正确做法） |
 
-### 6. 红线规则（必须遵守，浮层文字色继承坑）
+### 6. 浮层文字色规则（原"红线"，已大幅简化）
 
-**背景**：`DialogContent` 与 `AlertDialogContent` 基类硬编码了 `text-white`（`dialog.tsx:63`、`alert-dialog.tsx:57`）。该白色会**向下继承**给浮层内所有未显式设文字色的元素。
+**2026-07-22 起**：`DialogContent` / `AlertDialogContent` 基类已统一为 `text-foreground`（主题自适应，见 4.1）。因此**标准浮层内未显式设色的文本/图标会自动取主题前景色、明暗都可读**——旧版"白字白底不可见"的红线坑已消除。
 
-**坑点**：浮层内任何"依赖主题色/默认色"的交互元素——尤其是 `variant="ghost"` / `variant="outline"` 按钮、纯 icon 按钮、未指定色的文本——若不显式设色，就会继承为**白色**。当该浮层实际渲染在**浅色磨砂表面**上（如配方 A 的图片弹窗 `bg-white/72`）时，白字白底 → **不可见**。
+仍需遵守两条：
 
-**规则（强制）**：
+1. **"强制深色 / 彩底"表面要逐元素显式给色**（不能靠继承）：
+   - 登录弹窗（`bg-black/20` + 显式 `text-white`，全站唯一强制深色浮层）：内部文本用浅色（`text-white` / `text-zinc-400`），下挂的浅色控件（浅渐变按钮/图标容器）反转为深字（`text-slate-950` / `text-slate-900`）。见 4.2。
+   - 图上 / 彩底浮动控件：如图片弹窗翻页/关闭 `text-white md:text-foreground/80`、点赞/分享 icon `text-muted-foreground`（`image-modal.tsx`）。
+2. **Toast** 底色随主题变，已在 classNames 里对 toast/title/description 全部显式设色（`sonner.tsx:16-18`）；新增变体同样显式给色。
 
-1. **凡放进 Dialog/AlertDialog 的交互元素，必须显式声明文字色**，不得依赖继承。
-2. 现存正确范例，改动时对齐：
-   - `AlertDialogCancel` 已在 `variant="outline"` 基础上追加 `text-foreground`（`alert-dialog.tsx:139`），否则取消按钮在浅底不可见。
-   - 图片弹窗的点赞 icon 按钮显式 `text-muted-foreground`（点赞态切 `text-pink-500`，`image-modal.tsx:358`）、分享 icon 按钮显式 `text-muted-foreground`（`image-modal.tsx:364`）。
-   - 图片弹窗标题显式 `text-foreground`（`image-modal.tsx:351`）。
-3. **配方 A（自适应磨砂）的浮层，禁止依赖基类 `text-white`**——由于其浅色态底为白，一切文本/图标要用 `text-foreground` / `text-muted-foreground` 等主题色，让明暗都可读。
-4. **配方 B（深色调玻璃）的浮层**，可利用 `text-white` 作为默认正文色，但下挂的浅底控件（如登录页的浅渐变按钮、浅渐变图标容器）必须反转为深字（`text-slate-950` / `text-slate-900` 等），见 4.2。
-5. Toast 因底色随主题变化，已在 classNames 里对 toast/title/description 全部**显式设色**（`sonner.tsx:16-18`），新增 Toast 变体时同样必须显式给色，勿留继承。
-
-一句话记忆：**"浮层里凡是能被看见的字和图标，颜色都要自己写死；能不能看见由表面亮度决定，而基类默认给的是白色。"**
+一句话：**标准浮层已主题自适应、可放心继承；只有"强制深色 / 彩底"表面才需逐元素写死颜色。**
 
 ---
 
@@ -1167,7 +1158,7 @@ data-[state=closed]:duration-300 data-[state=open]:duration-500
 | `ghost` | `hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50` | **完全透明、无背景无文字色** | 悬停才出现 `accent` 背景 + 文字色 | 图标按钮、低干扰操作（点赞/分享，`image-modal.tsx:355-366`） |
 | `link` | `text-primary underline-offset-4 hover:underline` | 主色文字、无下划线 | 出现下划线（offset 4px = 0.25rem） | 文字型跳转链接 |
 
-> 关键坑（浮层内文字色继承）：`outline` 与 `ghost` 的 resting 态**都不设置自身文字颜色**——`outline` 只有 hover 才给 `text-accent-foreground`，`ghost` resting 态完全没有文字色。它们默认继承父容器的 `color`。在深色/玻璃拟态浮层（如 `login-modal` 的 `bg-black/20` 面板 `src/features/auth/components/login-modal.tsx:70`、`image-modal` 的 `bg-white/72 dark:bg-zinc-950/76` `image-modal.tsx:267`）里放 `ghost`/`outline` 按钮时，**必须显式补文字色**，否则会继承出对比度不足甚至不可见的颜色。项目里的做法就是补 `text-muted-foreground`（如分享按钮 `variant="ghost" ... className="rounded-full text-muted-foreground"`，`image-modal.tsx:364`），点赞按钮按状态在 `text-muted-foreground` 与 `text-pink-500` 之间切换（`image-modal.tsx:358`）。
+> 关键坑（浮层内文字色继承）：`outline` 与 `ghost` 的 resting 态**都不设置自身文字颜色**——`outline` 只有 hover 才给 `text-accent-foreground`，`ghost` resting 态完全没有文字色。它们默认继承父容器的 `color`。在深色/玻璃拟态浮层（如 `login-modal` 的 `bg-black/20` 面板 `src/features/auth/components/login-modal.tsx:70`、`image-modal` 的 `bg-white/78 dark:bg-zinc-950/78` `image-modal.tsx:267`）里放 `ghost`/`outline` 按钮时，**必须显式补文字色**，否则会继承出对比度不足甚至不可见的颜色。项目里的做法就是补 `text-muted-foreground`（如分享按钮 `variant="ghost" ... className="rounded-full text-muted-foreground"`，`image-modal.tsx:364`），点赞按钮按状态在 `text-muted-foreground` 与 `text-pink-500` 之间切换（`image-modal.tsx:358`）。
 
 ### size
 
@@ -1224,7 +1215,7 @@ transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]
 
 登录 CTA 的 loading 态用 `Loader2` 图标 + `animate-spin`（`login-modal.tsx:147`）+ 文案“验证中...”（`login-modal.tsx:148`）；非 loading 文案为“登 录”（`login-modal.tsx:150`）；禁用条件为 `loading || (turnstileEnabled && !turnstileToken)`（`login-modal.tsx:142`）。弹窗 CTA 通过 `copied`/`isPromptContentPublic` 切换文案“Copied to Clipboard!” / “Generate with this Prompt” / “Prompt 内容暂未公开”（`image-modal.tsx:473`），并有前置 `Sparkles` 图标 `h-5 w-5 mr-2`（`image-modal.tsx:472`）。
 
-> 品牌配套：login-modal 顶部图标徽章用**斜向线性渐变（to bottom-right，左上→右下）** `bg-gradient-to-br from-white via-slate-200 to-cyan-100`（`login-modal.tsx:75`，容器 `h-12 w-12 rounded-2xl`），标题用 `bg-clip-text text-transparent bg-gradient-to-br from-white to-white/70` 做渐变文字（`login-modal.tsx:79`）。CTA 与徽章共用 `shadow-cyan-100/20`，保持视觉家族一致。
+> 品牌配套：login-modal 顶部图标徽章用**斜向线性渐变（to bottom-right，左上→右下）** `bg-gradient-to-br from-white via-slate-200 to-cyan-100`（`login-modal.tsx:75`，容器 `h-12 w-12 rounded-xl`），标题用 `bg-clip-text text-transparent bg-gradient-to-br from-white to-white/70` 做渐变文字（`login-modal.tsx:79`）。CTA 与徽章共用 `shadow-cyan-100/20`，保持视觉家族一致。
 
 ### 纯图标按钮的可见性规则
 
@@ -1234,7 +1225,7 @@ transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]
 - 点赞按钮：未点赞 `text-muted-foreground`，已点赞 `text-pink-500 bg-pink-500/10`，hover 一律 `hover:bg-pink-500/10 hover:text-pink-500`（`image-modal.tsx:358`）。图标点亮用 `fill-current`（`image-modal.tsx:362`）。
 - 复制成功反馈：`Check` 图标加 `text-green-500`，未复制时 `Copy` 用继承色（此处继承 `secondary` 变体的 `text-secondary-foreground`）（`image-modal.tsx:439`）。
 
-image-modal 中直接用原生 `<button>` 的浮动控件（翻页/关闭，`image-modal.tsx:302-336`）不走 `buttonVariants`，其可见性规则更极端：图像区背景不可控，故用半透明黑底 + `text-white` + `backdrop-blur-md` 保证在任意图片上可读。各控件底色略有差异：翻页按钮 `bg-black/20 hover:bg-black/30`（`image-modal.tsx:304,313`）、桌面关闭 `bg-black/10 hover:bg-black/20`（`image-modal.tsx:323`）、移动关闭 `bg-black/60 hover:bg-black/80`（`image-modal.tsx:332`）。桌面端控件默认 `opacity-0`，靠父级 `group-hover:opacity-100` + `duration-300` 显现；移动关闭 `fixed` 常驻可见（`z-[100]`）。
+image-modal 中直接用原生 `<button>` 的浮动控件（翻页/关闭，`image-modal.tsx:302-336`）不走 `buttonVariants`，其可见性规则更极端：图像区背景不可控，故用半透明黑底 + `text-white` + `backdrop-blur-md` 保证在任意图片上可读。各控件底色略有差异：翻页按钮 `bg-black/20 hover:bg-black/30`（`image-modal.tsx:304,313`）、桌面关闭 `bg-black/20 hover:bg-black/30`（`image-modal.tsx:323`）、移动关闭 `bg-black/60 hover:bg-black/80`（`image-modal.tsx:332`）。桌面端控件默认 `opacity-0`，靠父级 `group-hover:opacity-100` + `duration-300` 显现；移动关闭 `fixed` 常驻可见（`z-[100]`）。
 
 > 规则：图标按钮 resting 态**不要留空文字色**（否则玻璃浮层里可能不可见）。低强调常驻用 `text-muted-foreground`；语义色（点赞粉、成功绿、删除红）只在激活/反馈时出现。悬浮在图片等不可控背景上的按钮必须自带半透明底 + `backdrop-blur` + 明确文字色。
 
@@ -1325,7 +1316,7 @@ Lucide 图标的渲染尺寸由 Tailwind 的宽高类控制（`h-* w-*` 或 `siz
 `DialogContent` 基类带 `text-white`（`dialog.tsx:63`），`login-modal` 的 `DialogContent` 又叠了 `border-none bg-black/20 backdrop-blur-xl`（`login-modal.tsx:70`）——**弹窗内默认文字/图标色是白色**。因此：
 
 - 放进这类深色浮层的图标，若不显式指定颜色，会是白色。登录框品牌 `Sparkles` 特意用 `text-slate-900`（`login-modal.tsx:76`）压成深色，才能在浅色渐变徽标底（`bg-gradient-to-br from-white via-slate-200 to-cyan-100`）上可见。
-- `image-modal` 的 `DialogContent` 用 `bg-white/72 dark:bg-zinc-950/76` 覆盖了底色（`image-modal.tsx:267`），内部图标改回 `text-foreground`/`text-muted-foreground` 体系，跟随明暗模式。
+- `image-modal` 的 `DialogContent` 用 `bg-white/78 dark:bg-zinc-950/78` 覆盖了底色（`image-modal.tsx:267`），内部图标改回 `text-foreground`/`text-muted-foreground` 体系，跟随明暗模式。
 - **规则**：往任何 `Dialog`/浮层里塞图标或带文字的按钮时，不能假设继承的是页面前景色，必须确认当前浮层的实际文字底色，必要时显式写 `text-*`。
 
 ### 组件内置图标（Select / Dialog）
@@ -1664,9 +1655,9 @@ transition-[color,box-shadow] overflow-hidden
 | 圆角（基类默认） | `rounded-md` | `8px`（注意：**基类是 md 不是 full**，药丸形由调用方额外加 `rounded-full` 得到） |
 | 左右内边距 | `px-2` | `0.5rem = 8px` |
 | 上下内边距 | `py-0.5` | `0.125rem = 2px` |
-| 字号 | `text-xs` | `0.75rem = 12px`，行高 `1rem = 16px` |
+| 字号 | `text-xs` | `0.875rem = 14px`，行高 `1rem = 16px` |
 | 字重 | `font-medium` | 500 |
-| 图标尺寸 | `[&>svg]:size-3` | `0.75rem = 12px` |
+| 图标尺寸 | `[&>svg]:size-3` | `0.875rem = 14px` |
 | 图标/文字间距 | `gap-1` | `0.25rem = 4px` |
 | 边框 | `border` | `1px` |
 | 聚焦环 | `focus-visible:ring-[3px]` | `3px`，色 `ring-ring/50`（`--ring` 50% 透明） |
@@ -1698,7 +1689,7 @@ transition-[color,box-shadow] overflow-hidden
 | size | 类名 | 字号 | 左右内边距 | 上下内边距 |
 |---|---|---|---|---|
 | `sm`（默认） | `text-xs px-2 py-0.5` | `12px` | `8px` | `2px` |
-| `md` | `text-sm px-3 py-1` | `14px` | `0.75rem = 12px` | `0.25rem = 4px` |
+| `md` | `text-sm px-3 py-1` | `14px` | `0.875rem = 14px` | `0.25rem = 4px` |
 
 **色片规则**（tag-badge.tsx:35）：内联样式 `backgroundColor = tag.color ? \`${tag.color}20\` : undefined`。即在标签自定义色后拼接十六进制透明度后缀 `20`（= `0x20/0xFF ≈ 12.5%` 不透明度），得到一层极淡的品牌色底。`tag.color` 为空时不设内联背景，回退到 `secondary` 的 `bg-secondary`。
 
@@ -1736,7 +1727,7 @@ transition-[color,box-shadow] overflow-hidden
 
 | 部位 | 类名 | 精确值 |
 |---|---|---|
-| 外层容器 | `flex items-center gap-3 text-sm`（:25） | 组间距 `0.75rem = 12px`；字号 `14px`；额外拼接传入 `className` |
+| 外层容器 | `flex items-center gap-3 text-sm`（:25） | 组间距 `0.875rem = 14px`；字号 `14px`；额外拼接传入 `className` |
 | 单组容器 | `flex items-center gap-1 text-muted-foreground`（:27/:34/:41） | 图标与数字间 `4px`；整组 muted 前景 |
 | 图标 | `h-3.5 w-3.5`（:28/:35/:42） | `0.875rem = 14px` |
 | 可选中文标签 | `hidden sm:inline`（:30/:37/:44） | 默认隐藏，`sm`（≥640px）起显示；仅当 `showLabel=true` |
@@ -2145,7 +2136,7 @@ Hero 区标题（`:146`）：`text-3xl md:text-5xl font-bold`，渐变 `bg-gradi
   className="!max-w-[95vw] !w-full md:!max-w-[1600px] !h-[92vh] p-0 gap-0 outline-none
              border border-white/30 dark:border-white/10
              shadow-2xl shadow-slate-900/15 overflow-hidden rounded-xl
-             bg-white/72 dark:bg-zinc-950/76 backdrop-blur-2xl"
+             bg-white/78 dark:bg-zinc-950/78 backdrop-blur-2xl"
   showCloseButton={false} />
 ```
 来源：`image-modal.tsx:266-269`（className 在 `:267`）。
@@ -2158,7 +2149,7 @@ Hero 区标题（`:146`）：`text-3xl md:text-5xl font-bold`，渐变 `bg-gradi
 | 圆角 | `rounded-xl` = `0.75rem` = 12px |
 | 边框 | `border border-white/30`（暗 `white/10`）= 1px |
 | 阴影 | `shadow-2xl shadow-slate-900/15` | slate-900 15% 透明有色阴影 |
-| 磨砂背景 | `bg-white/72`（暗 `bg-zinc-950/76`）+ `backdrop-blur-2xl`（模糊 40px） | 亮 72%、暗 76% 不透明度 |
+| 磨砂背景 | `bg-white/78`（暗 `bg-zinc-950/78`）+ `backdrop-blur-2xl`（模糊 40px） | 亮/暗均 78% 不透明度 |
 | 关闭按钮 | `showCloseButton={false}` | 禁用 Dialog 自带右上角关闭，改用自定义两套按钮 |
 
 #### 2.3 左图右信息栅格
@@ -2216,14 +2207,14 @@ backdrop-blur-md z-50
 
 | 版本 | 类摘要 | 行 |
 | --- | --- | --- |
-| 桌面（`X h-6 w-6`） | `absolute top-6 left-6 p-3 rounded-full bg-black/10 hover:bg-black/20 text-foreground/80 hover:text-foreground dark:bg-white/10 dark:hover:bg-white/20 ... md:block hidden opacity-0 group-hover:opacity-100 duration-300 backdrop-blur-md z-50` | `:321-327` |
+| 桌面（`X h-6 w-6`） | `absolute top-6 left-6 p-3 rounded-full bg-black/20 hover:bg-black/30 text-foreground/80 hover:text-foreground dark:bg-white/10 dark:hover:bg-white/20 ... md:block hidden opacity-0 group-hover:opacity-100 duration-300 backdrop-blur-md z-50` | `:321-327` |
 | 移动（`X h-5 w-5`） | `md:hidden fixed top-4 right-4 p-2.5 rounded-full bg-black/60 hover:bg-black/80 text-white transition-all backdrop-blur-md z-[100] shadow-lg` | `:330-336` |
 
 规则：桌面版**仅悬停可见**（`opacity-0 group-hover:opacity-100`）且位于左上；移动版**常显**、更深底色 `bg-black/60`、`z-[100]`（高于翻页钮 `z-50`），用 `fixed` 贴视口右上，避免被弹窗滚动裁掉。
 
 #### 2.7 右信息栏
 
-容器（`:340`）：`flex flex-col border-t md:border-t-0 md:border-l border-white/30 dark:border-white/10 min-h-0 bg-white/72 dark:bg-zinc-950/76 backdrop-blur-2xl h-full overflow-hidden`。移动端顶边分隔，桌面改左边分隔线（1px、`white/30`，暗 `white/10`）。
+容器（`:340`）：`flex flex-col border-t md:border-t-0 md:border-l border-white/30 dark:border-white/10 min-h-0 bg-white/78 dark:bg-zinc-950/78 backdrop-blur-2xl h-full overflow-hidden`。移动端顶边分隔，桌面改左边分隔线（1px、`white/30`，暗 `white/10`）。
 
 - 内容区内边距：`h-full p-4 md:p-8 flex flex-col gap-4 md:gap-6 overflow-hidden`（`:347`）。
 - 标题 `DialogTitle`：`text-xl md:text-3xl font-bold leading-tight tracking-tight text-foreground`（`:351`）。
@@ -2261,7 +2252,7 @@ hover:[&::-webkit-scrollbar-thumb]:bg-border/60
 
 #### 2.9 粘性底栏主 CTA（渐变）
 
-来源：`image-modal.tsx:465-475`。底栏容器（`:465`）：`p-3 md:p-6 border-t border-white/30 dark:border-white/10 bg-white/70 dark:bg-zinc-950/70 backdrop-blur-2xl flex flex-col gap-3 shrink-0`。
+来源：`image-modal.tsx:465-475`。底栏容器（`:465`）：`p-3 md:p-6 border-t border-white/30 dark:border-white/10 bg-white/78 dark:bg-zinc-950/78 backdrop-blur-2xl flex flex-col gap-3 shrink-0`。
 
 CTA 按钮（`:466-474`，`size="lg"`）：
 ```
@@ -2403,5 +2394,6 @@ dark:border-white/10 dark:bg-white/10 dark:text-zinc-300 dark:hover:bg-white/20 
 
 | 日期 | 提交 | 章节 | 变更摘要 |
 |---|---|---|---|
+| 2026-07-22 | (本次) | 5/6 玻璃·浮层 · 12 画廊 · 全站 | **UI 一致性统一 + 精简**：磨砂玻璃收敛为单一配方 `bg-white/78 dark:bg-zinc-950/78` + `border-white/30 dark:border-white/10`（ImageModal 各面板与 Toast 对齐）；Dialog/AlertDialog 基类统一为主题自适应 `bg-background/90 text-foreground`（登录弹窗补 `text-white` 保持原样，仍是全站唯一强制深色浮层）；首页页脚补 `border-t border-border/40`；图上桌面关闭按钮透明度对齐翻页钮（`bg-black/20 hover:bg-black/30`）；登录图标 `rounded-2xl`→`rounded-xl`；"红线规则"随基类自适应大幅简化。 |
 | 2026-07-22 | `8a01aef` | 6 · 玻璃/浮层 | 确认弹窗「取消」按钮补 `text-foreground`，修复明亮主题白字白底不可见（弹窗背景保持原样）。 |
 | 2026-07-22 | (初始) | 全部 | 依据当前代码首次生成完整 UI 设计规范。 |

@@ -253,7 +253,7 @@ export function ClientGallery({ initialPrompts, categories: initialCategories, t
             />
 
             {/* Footer */}
-            <footer className="mt-20 py-12">
+            <footer className="border-t border-border/40 mt-20 py-12">
                 <div className="container mx-auto px-4 text-center text-muted-foreground">
                     <p className="text-sm">© {siteConfig.copyright.year} {settings.site.name}. {settings.site.copyrightText}。</p>
                 </div>
