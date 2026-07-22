@@ -41,6 +41,7 @@ CHANGELOG-OPTIMIZATION.md
 CLAUDE.md
 CONFIG.md
 README-DOCKER.md
+UI-DESIGN-SPEC.md
 
 # production data (managed at runtime, must NOT be overwritten by git)
 /data/*.json
