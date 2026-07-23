@@ -345,20 +345,34 @@ export function getPromptStatusLabel(status: Prompt["status"]): string {
 }
 
 /**
- * 常用标签建议（用于标签输入的自动完成）
- * 这些是最常用的标签，会在输入时作为建议显示
+ * 后台 Prompt 状态徽章样式（集中管理，避免在组件里散落硬编码颜色）。
  */
-export const popularTagSuggestions = [
-    "portrait", "landscape", "minimalist", "cinematic", "street",
-    "japanese", "korean", "tech", "scifi", "cyberpunk",
-    "anime", "vibrant", "dark", "fantasy", "realistic",
-    "abstract", "retro", "futuristic", "dreamy", "elegant",
-    "fashion", "editorial", "artistic", "watercolor", "sketch",
-    "neon", "monochrome", "pastel", "kawaii", "dramatic",
-    "nature", "urban", "vintage", "modern", "classic",
-]
+export const promptStatusStyles: Record<Prompt["status"], string> = {
+    published: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
+    archived: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
+    draft: "bg-secondary text-secondary-foreground border-border",
+}
 
+/** 诊断页状态胶囊：正常 vs 需处理，统一一份配色 */
+export const statusPillStyles = {
+    ok: "border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+    warn: "border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-400",
+} as const
 
+/** 品牌标记（侧栏 logo 方块），集中避免散落 slate/cyan 硬编码 */
+export const brandMark = {
+    boxClass: "bg-gradient-to-br from-white via-slate-200 to-cyan-100 ring-1 ring-slate-300/70",
+    glyphClass: "text-slate-900",
+    glyph: "N",
+} as const
+
+/** 后台界面常量（替代散落在组件里的魔法数字） */
+export const adminUi = {
+    listContentPreview: 190, // 列表正文预览截断长度
+    listPageSize: 20,        // 列表分页每页条数
+    healthDiffLimit: 8,      // 诊断页差异列表展示上限
+    tagSuggestionLimit: 36,  // 标签输入建议展示数量
+} as const
 
 /**
  * UI 文本配置
@@ -385,6 +399,12 @@ export const uiText = {
         back: "返回",
         cancel: "取消",
         confirm: "确定",
+        save: "保存",
+        delete: "删除",
+        add: "添加",
+        edit: "编辑",
+        reset: "重置",
+        create: "新建 Prompt",
     },
 
     /** 页面标题 */
@@ -402,7 +422,7 @@ export const uiText = {
     empty: {
         noPrompts: "暂无 Prompts",
         noResults: "未找到相关结果",
-        noContent: "暂无内容，点击右上角新建",
+        noContent: "暂无内容，点击「新建 Prompt」开始添加",
     },
 
     /** 提示信息 */
@@ -411,6 +431,7 @@ export const uiText = {
         loginRequired: "请先登录",
         confirmLogout: "确定要退出登录吗？",
         logoutDescription: "您将退出当前账户。",
+        adminLogoutDescription: "您将退出管理后台。",
     },
     /** 排序选项文本 */
     sort: {

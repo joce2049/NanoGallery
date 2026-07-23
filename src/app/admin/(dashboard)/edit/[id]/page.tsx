@@ -19,8 +19,9 @@ export default async function EditPage({ params }: EditPageProps) {
 
     return (
         <div className="max-w-4xl mx-auto space-y-6">
-            <div className="flex items-center justify-between">
-                <h1 className="text-3xl font-bold text-white">编辑 Prompt</h1>
+            <div>
+                <h1 className="text-2xl font-bold text-foreground">编辑 Prompt</h1>
+                <p className="text-sm text-muted-foreground mt-1">修改内容与元数据；统计数据会保留，保存后立即生效。</p>
             </div>
 
             <PromptForm initialData={prompt} isEditing={true} />

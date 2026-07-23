@@ -4,6 +4,7 @@ import { Input } from "@/shared/ui/input"
 import { RefreshCw, X } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 import type { Tag } from "@/core/types"
+import { adminUi } from "@/config"
 
 interface SimpleTagInputProps {
     value: string[]
@@ -13,7 +14,7 @@ interface SimpleTagInputProps {
 export function SimpleTagInput({ value, onChange }: SimpleTagInputProps) {
     const [allTags, setAllTags] = useState<Tag[]>([])
     const [tagPage, setTagPage] = useState(0)
-    const visibleTagCount = 36
+    const visibleTagCount = adminUi.tagSuggestionLimit
 
     useEffect(() => {
         fetch("/api/tags")

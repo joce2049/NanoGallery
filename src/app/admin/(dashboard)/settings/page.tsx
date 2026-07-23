@@ -3,18 +3,18 @@
 import { useEffect, useState } from "react"
 import { Save, Settings as SettingsIcon } from "lucide-react"
 import { Button } from "@/shared/ui/button"
-import { Card } from "@/shared/ui/card"
 import { Input } from "@/shared/ui/input"
 import { Label } from "@/shared/ui/label"
 import { Textarea } from "@/shared/ui/textarea"
+import { AdminPanel } from "@/features/admin/components/admin-panel"
 import { defaultPublicRuntimeSettings } from "@/shared/lib/use-runtime-settings"
 import type { PublicRuntimeSettings } from "@/core/settings"
+import { toast } from "sonner"
 
 export default function SettingsPage() {
     const [settings, setSettings] = useState<PublicRuntimeSettings>(defaultPublicRuntimeSettings)
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
-    const [message, setMessage] = useState("")
 
     useEffect(() => {
         fetch("/api/settings", { cache: "no-store" })
@@ -25,71 +25,49 @@ export default function SettingsPage() {
     }, [])
 
     const updateSite = (key: keyof PublicRuntimeSettings["site"], value: string) => {
-        setSettings((current) => ({
-            ...current,
-            site: {
-                ...current.site,
-                [key]: value,
-            },
-        }))
+        setSettings((current) => ({ ...current, site: { ...current.site, [key]: value } }))
     }
 
     const updateUpload = (key: keyof PublicRuntimeSettings["upload"], value: string) => {
-        setSettings((current) => ({
-            ...current,
-            upload: {
-                ...current.upload,
-                [key]: Number(value),
-            },
-        }))
+        setSettings((current) => ({ ...current, upload: { ...current.upload, [key]: Number(value) } }))
     }
 
     const updatePrompt = (key: keyof PublicRuntimeSettings["prompt"], value: string) => {
-        setSettings((current) => ({
-            ...current,
-            prompt: {
-                ...current.prompt,
-                [key]: value,
-            },
-        }))
+        setSettings((current) => ({ ...current, prompt: { ...current.prompt, [key]: value } }))
     }
 
     const handleSave = async () => {
         setSaving(true)
-        setMessage("")
-
         try {
             const res = await fetch("/api/settings", {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(settings),
             })
-
             const data = await res.json().catch(() => null)
             if (!res.ok) throw new Error(data?.error || "保存失败")
-
             setSettings(data)
-            setMessage("设置已保存")
+            toast.success("设置已保存")
         } catch (error) {
-            setMessage(error instanceof Error ? error.message : "保存失败")
+            toast.error(error instanceof Error ? error.message : "保存失败")
         } finally {
             setSaving(false)
         }
     }
 
     if (loading) {
-        return <div className="p-8 text-muted-foreground">正在加载设置...</div>
+        return <div className="text-muted-foreground">正在加载设置...</div>
     }
 
     return (
-        <div className="space-y-8 p-8">
-            <div className="flex items-center justify-between gap-4">
+        <div className="space-y-6">
+            <div className="flex flex-wrap items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold flex items-center gap-2">
-                        <SettingsIcon className="h-7 w-7" />
+                    <h1 className="flex items-center gap-2 text-2xl font-bold">
+                        <SettingsIcon className="h-6 w-6" />
                         站点设置
                     </h1>
-                    <p className="text-muted-foreground mt-1">这些设置保存在本地数据仓库，不会被代码更新覆盖。</p>
+                    <p className="mt-1 text-sm text-muted-foreground">这些设置保存在本地数据仓库，不会被代码更新覆盖。</p>
                 </div>
                 <Button onClick={handleSave} disabled={saving}>
                     <Save className="mr-2 h-4 w-4" />
@@ -97,17 +75,7 @@ export default function SettingsPage() {
                 </Button>
             </div>
 
-            {message && (
-                <div className="rounded-md border bg-muted/40 px-4 py-3 text-sm">
-                    {message}
-                </div>
-            )}
-
-            <Card className="p-6 space-y-5">
-                <div>
-                    <h2 className="text-lg font-semibold">站点信息</h2>
-                    <p className="text-sm text-muted-foreground">用于首页、侧边栏、SEO 和后台标题。</p>
-                </div>
+            <AdminPanel title="站点信息" description="用于首页、侧边栏、SEO 和后台标题" bodyClassName="space-y-4">
                 <div className="grid gap-4 md:grid-cols-2">
                     <div className="space-y-2">
                         <Label htmlFor="site-name">网站名称</Label>
@@ -138,28 +106,16 @@ export default function SettingsPage() {
                         <Input id="admin-title" value={settings.site.adminTitle} onChange={(e) => updateSite("adminTitle", e.target.value)} />
                     </div>
                 </div>
-            </Card>
+            </AdminPanel>
 
-            <Card className="p-6 space-y-5">
-                <div>
-                    <h2 className="text-lg font-semibold">Prompt 显示</h2>
-                    <p className="text-sm text-muted-foreground">控制前台作品中 Prompt 内容不可公开时的提示文案。</p>
-                </div>
+            <AdminPanel title="Prompt 显示" description="控制前台作品中 Prompt 内容不可公开时的提示文案">
                 <div className="space-y-2">
                     <Label htmlFor="locked-content-message">不公开提示文案</Label>
-                    <Textarea
-                        id="locked-content-message"
-                        value={settings.prompt.lockedContentMessage}
-                        onChange={(e) => updatePrompt("lockedContentMessage", e.target.value)}
-                    />
+                    <Textarea id="locked-content-message" value={settings.prompt.lockedContentMessage} onChange={(e) => updatePrompt("lockedContentMessage", e.target.value)} />
                 </div>
-            </Card>
+            </AdminPanel>
 
-            <Card className="p-6 space-y-5">
-                <div>
-                    <h2 className="text-lg font-semibold">图片压缩</h2>
-                    <p className="text-sm text-muted-foreground">控制上传后的主图和缩略图体积。数值越高画质越好，文件也越大。</p>
-                </div>
+            <AdminPanel title="图片压缩" description="控制上传后的主图和缩略图体积，数值越高画质越好、文件越大">
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     <div className="space-y-2">
                         <Label htmlFor="max-upload-size">最大上传大小 MB</Label>
@@ -182,7 +138,7 @@ export default function SettingsPage() {
                         <Input id="thumb-quality" type="number" min={40} max={100} value={settings.upload.thumbnailQuality} onChange={(e) => updateUpload("thumbnailQuality", e.target.value)} />
                     </div>
                 </div>
-            </Card>
+            </AdminPanel>
         </div>
     )
 }

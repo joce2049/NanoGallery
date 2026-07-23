@@ -1,15 +1,8 @@
 import { NextResponse } from "next/server";
 import { JSONFileDB } from "@/server/db";
 import { isAuthenticated } from "@/server/auth";
+import { toSlug } from "@/core/slug";
 import type { Category } from "@/core/types";
-
-function toSlug(value: string) {
-    return value
-        .trim()
-        .toLowerCase()
-        .replace(/\s+/g, "-")
-        .replace(/[^a-z0-9\u4e00-\u9fa5-]/g, "");
-}
 
 export async function GET() {
     const categories = await JSONFileDB.getAllCategories();

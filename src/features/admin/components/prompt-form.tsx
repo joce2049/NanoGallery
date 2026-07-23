@@ -15,6 +15,7 @@ import type { Category, Prompt } from "@/core/types"
 import { getImageUrl } from "@/shared/lib/utils"
 import { aiModels, appDefaults, aspectRatioOptions, promptStatusIds, promptStatusOptions } from "@/config"
 import { useRuntimeSettings } from "@/shared/lib/use-runtime-settings"
+import { toast } from "sonner"
 
 interface PromptFormProps {
     initialData?: Partial<Prompt>
@@ -123,13 +124,13 @@ export function PromptForm({ initialData, isEditing = false }: PromptFormProps) 
         if (!file) return
 
         if (!settings.upload.allowedTypes.includes(file.type)) {
-            alert("仅支持 JPG、PNG、WebP 图片")
+            toast.error("仅支持 JPG、PNG、WebP 图片")
             input.value = ""
             return
         }
 
         if (file.size > settings.upload.maxUploadSize) {
-            alert(`图片大小不能超过 ${settings.upload.maxUploadSizeMB}MB`)
+            toast.error(`图片大小不能超过 ${settings.upload.maxUploadSizeMB}MB`)
             input.value = ""
             return
         }
@@ -145,7 +146,10 @@ export function PromptForm({ initialData, isEditing = false }: PromptFormProps) 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         const shouldPublish = status === promptStatusIds.published
-        if (shouldPublish && !imageUrl && !pendingFile) return alert("发布前请先选择图片")
+        if (shouldPublish && !imageUrl && !pendingFile) {
+            toast.error("发布前请先选择图片")
+            return
+        }
 
         setLoading(true)
         try {
@@ -189,14 +193,15 @@ export function PromptForm({ initialData, isEditing = false }: PromptFormProps) 
             })
 
             if (res.ok) {
+                toast.success(isEditing ? "已保存修改" : "已发布 Prompt")
                 router.push("/admin")
                 router.refresh()
             } else {
                 const data = await res.json().catch(() => null)
-                alert(data?.error || "保存失败")
+                toast.error(data?.error || "保存失败")
             }
         } catch (error) {
-            alert(error instanceof Error ? error.message : "保存出错")
+            toast.error(error instanceof Error ? error.message : "保存出错")
         } finally {
             setLoading(false)
             setUploading(false)
@@ -257,7 +262,7 @@ export function PromptForm({ initialData, isEditing = false }: PromptFormProps) 
                                     </div>
                                     <div>
                                         <p className="font-medium text-foreground">点击或拖拽上传图片</p>
-                                        <p className="text-sm text-muted-foreground mt-1">支持 JPG, PNG, WebP (Max 10MB)</p>
+                                        <p className="text-sm text-muted-foreground mt-1">支持 JPG、PNG、WebP · 最大 {settings.upload.maxUploadSizeMB}MB</p>
                                     </div>
                                 </>
                             )}
@@ -394,7 +399,7 @@ export function PromptForm({ initialData, isEditing = false }: PromptFormProps) 
                         value={content}
                         onChange={e => setContent(e.target.value)}
                         placeholder="Complete prompt text..."
-                        className="bg-background min-h-[120px] font-mono text-sm"
+                        className="bg-background min-h-[180px] max-h-[45vh] overflow-y-auto font-mono text-sm"
                         required
                     />
                 </div>
@@ -434,7 +439,7 @@ export function PromptForm({ initialData, isEditing = false }: PromptFormProps) 
                     <SimpleTagInput value={selectedTags} onChange={setSelectedTags} />
                 </div>
 
-                <div className="sticky bottom-0 z-10 pt-4 pb-4 bg-background border-t border-border shadow-lg -mx-2 px-2 mt-auto">
+                <div className="sticky bottom-0 z-10 pt-4 pb-4 bg-background border-t border-border -mx-2 px-2 mt-auto">
                     <Button
                         type="submit"
                         className="w-full"
