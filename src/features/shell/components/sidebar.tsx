@@ -282,7 +282,7 @@ function SidebarContent({ isLoggedIn = false, siteName, initialCategories }: Sid
                         <AlertDialogCancel>取消</AlertDialogCancel>
                         <AlertDialogAction
                             onClick={handleLogout}
-                            className="bg-red-500 hover:bg-red-600 focus:ring-red-500"
+                            className="bg-destructive text-white hover:bg-destructive/90"
                         >
                             退出登录
                         </AlertDialogAction>
