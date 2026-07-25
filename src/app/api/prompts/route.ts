@@ -7,9 +7,31 @@ import { getPublishedPrompts, searchPrompts, sortPrompts } from "@/core/data-uti
 import { getPeriodStats, isSupabaseConfigured } from "@/server/supabase";
 import { deletePromptMedia, deleteReplacedPromptMedia } from "@/server/media-cleanup";
 import { appDefaults, isPromptStatus, isPublishedPrompt } from "@/config";
+import { classifyStorageFailure } from "@/server/storage-errors";
+import {
+    createAdminPromptError,
+    type AdminPromptErrorCode,
+} from "@/shared/lib/admin-prompt-errors";
 
 const validSorts = new Set(["latest", "popular", "copies", "likes", "trending"]);
 const validPeriods = new Set(["today", "week", "month"]);
+
+function errorResponse(code: AdminPromptErrorCode, status: number) {
+    return NextResponse.json(createAdminPromptError(code), { status });
+}
+
+function promptSaveErrorResponse(error: unknown) {
+    if (error instanceof SyntaxError) return errorResponse("PROMPT_DATA_INVALID", 500);
+
+    const failure = classifyStorageFailure(error);
+    if (failure === "full") return errorResponse("PROMPT_STORAGE_FULL", 500);
+    if (failure === "permission") return errorResponse("PROMPT_STORAGE_PERMISSION_DENIED", 500);
+    return errorResponse("PROMPT_SAVE_FAILED", 500);
+}
+
+function isRequestBody(value: unknown): value is Record<string, unknown> {
+    return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
 
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
@@ -69,37 +91,69 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
     if (!await isAuthenticated()) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        return errorResponse("SESSION_EXPIRED", 401);
     }
 
+    let parsedBody: unknown;
     try {
-        const body = await request.json();
-        const status = isPromptStatus(body.status) ? body.status : appDefaults.prompt.status;
+        parsedBody = await request.json();
+    } catch (error) {
+        console.error("Parse prompt request error:", error);
+        return errorResponse("PROMPT_INVALID_JSON", 400);
+    }
 
-        if (isPublishedPrompt({ status }) && !body.imageUrl) {
-            return NextResponse.json({ error: "发布前请先上传图片" }, { status: 400 });
+    if (!isRequestBody(parsedBody)) {
+        return errorResponse("PROMPT_INVALID_BODY", 400);
+    }
+
+    const body = parsedBody;
+    const title = typeof body.title === "string" ? body.title : "";
+    const description = typeof body.description === "string" ? body.description : "";
+    const content = typeof body.content === "string" ? body.content : "";
+
+    if (!title.trim()) return errorResponse("PROMPT_TITLE_REQUIRED", 400);
+    if (!description.trim()) return errorResponse("PROMPT_DESCRIPTION_REQUIRED", 400);
+    if (!content.trim()) return errorResponse("PROMPT_CONTENT_REQUIRED", 400);
+
+    const status = isPromptStatus(body.status) ? body.status : appDefaults.prompt.status;
+    const published = isPublishedPrompt({ status });
+    const imageUrl = typeof body.imageUrl === "string" ? body.imageUrl : "";
+    if (published && !imageUrl.trim()) {
+        return errorResponse("PROMPT_IMAGE_REQUIRED", 400);
+    }
+
+    let publishedAt: Date | undefined;
+    if (published) {
+        if (typeof body.publishedAt === "string" || typeof body.publishedAt === "number") {
+            publishedAt = new Date(body.publishedAt);
+        } else {
+            publishedAt = new Date();
         }
+    }
 
-        const newPrompt: Prompt = {
-            ...body,
-            id: Date.now().toString(), // Simple ID generation
-            createdAt: new Date(),
-            updatedAt: new Date(),
-            views: 0,
-            copies: 0,
-            likes: 0,
-            contentPublic: body.contentPublic !== false,
-            status,
-            publishedAt: isPublishedPrompt({ status })
-                ? new Date(body.publishedAt || Date.now())
-                : undefined,
-        };
+    const newPrompt: Prompt = {
+        ...(body as unknown as Prompt),
+        id: Date.now().toString(), // Simple ID generation
+        title,
+        description,
+        content,
+        imageUrl,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        views: 0,
+        copies: 0,
+        likes: 0,
+        contentPublic: body.contentPublic !== false,
+        status,
+        publishedAt,
+    };
 
+    try {
         await JSONFileDB.savePrompt(newPrompt);
         return NextResponse.json(newPrompt);
-    } catch (e) {
-        console.error("Save prompt error:", e);
-        return NextResponse.json({ error: "Failed to save prompt" }, { status: 500 });
+    } catch (error) {
+        console.error("Save prompt error:", error);
+        return promptSaveErrorResponse(error);
     }
 }
 

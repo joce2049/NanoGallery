@@ -12,10 +12,210 @@ import Image from "next/image"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select"
 import { SimpleTagInput } from "@/shared/ui/simple-tag-input"
 import type { Category, Prompt } from "@/core/types"
-import { getImageUrl } from "@/shared/lib/utils"
+import { cn, getImageUrl } from "@/shared/lib/utils"
 import { aiModels, appDefaults, aspectRatioOptions, promptStatusIds, promptStatusOptions } from "@/config"
 import { useRuntimeSettings } from "@/shared/lib/use-runtime-settings"
+import {
+    adminPromptErrorMessages,
+    adminPromptFields,
+    isAdminPromptErrorPayload,
+    type AdminPromptErrorCode,
+    type AdminPromptField,
+} from "@/shared/lib/admin-prompt-errors"
 import { toast } from "sonner"
+
+const UPLOAD_TIMEOUT_MS = 120_000
+const SAVE_TIMEOUT_MS = 20_000
+const SUBMIT_ERROR_TOAST_ID = "prompt-form-submit-error"
+
+const fieldIds: Record<AdminPromptField, string> = {
+    title: "prompt-title",
+    description: "prompt-description",
+    content: "prompt-content",
+    image: "prompt-image",
+}
+
+function getFieldErrorId(field: AdminPromptField) {
+    return `${fieldIds[field]}-error`
+}
+
+const imageReselectErrorCodes = new Set<AdminPromptErrorCode>([
+    "UPLOAD_UNSUPPORTED_TYPE",
+    "UPLOAD_FILE_TOO_LARGE",
+    "UPLOAD_INVALID_IMAGE",
+])
+
+type FieldErrors = Partial<Record<AdminPromptField, string>>
+type SubmitStage = "upload" | "save"
+type SubmitState = "idle" | "uploading" | "saving"
+
+const stageMessages: Record<SubmitStage, {
+    timeout: string
+    network: string
+    unavailable: string
+    failed: string
+}> = {
+    upload: {
+        timeout: "图片上传响应超时，请检查网络后重试。",
+        network: "网络连接异常，无法完成图片上传，请检查网络后重试。",
+        unavailable: "图片上传服务暂时不可用，请稍后重试。",
+        failed: "图片上传失败，请稍后重试。",
+    },
+    save: {
+        timeout: "Prompt 保存请求超时，无法确认是否已保存；请先在新标签页检查后台列表后再重试。",
+        network: "保存时网络连接中断，无法确认 Prompt 是否已保存；请先在新标签页检查后台列表后再重试。",
+        unavailable: "Prompt 保存服务暂时不可用，无法确认是否已保存；请先在新标签页检查后台列表后再重试。",
+        failed: "Prompt 保存失败，请检查服务器状态后重试。",
+    },
+}
+
+type ParsedResponseBody = {
+    data: unknown
+    isJson: boolean
+}
+
+type UploadResponse = {
+    url: string
+    thumbnailUrl?: string
+    originalSize: number
+    compressedSize: number
+    thumbnailSize?: number
+    width: number
+    height: number
+    quality: number
+    format: string
+}
+
+class PromptSubmissionError extends Error {
+    constructor(
+        message: string,
+        readonly field?: AdminPromptField,
+        readonly code?: AdminPromptErrorCode
+    ) {
+        super(message)
+        this.name = "PromptSubmissionError"
+    }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return Boolean(value) && typeof value === "object" && !Array.isArray(value)
+}
+
+function isFiniteNumber(value: unknown): value is number {
+    return typeof value === "number" && Number.isFinite(value)
+}
+
+function isUploadResponse(value: unknown): value is UploadResponse {
+    if (!isRecord(value)) return false
+
+    return typeof value.url === "string"
+        && value.url.length > 0
+        && (value.thumbnailUrl === undefined || typeof value.thumbnailUrl === "string")
+        && isFiniteNumber(value.originalSize)
+        && isFiniteNumber(value.compressedSize)
+        && (value.thumbnailSize === undefined || isFiniteNumber(value.thumbnailSize))
+        && isFiniteNumber(value.width)
+        && isFiniteNumber(value.height)
+        && isFiniteNumber(value.quality)
+        && typeof value.format === "string"
+        && value.format.length > 0
+}
+
+function isSavedPromptResponse(value: unknown): value is { id: string } {
+    return isRecord(value) && typeof value.id === "string" && value.id.length > 0
+}
+
+async function fetchWithTimeout(
+    input: RequestInfo | URL,
+    init: RequestInit,
+    timeoutMs: number,
+    stage: SubmitStage
+) {
+    const controller = new AbortController()
+    const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs)
+
+    try {
+        return await fetch(input, { ...init, signal: controller.signal })
+    } catch (error) {
+        if (controller.signal.aborted || (error instanceof DOMException && error.name === "AbortError")) {
+            throw new PromptSubmissionError(stageMessages[stage].timeout)
+        }
+        throw new PromptSubmissionError(stageMessages[stage].network)
+    } finally {
+        window.clearTimeout(timeoutId)
+    }
+}
+
+async function readResponseBody(response: Response, stage: SubmitStage): Promise<ParsedResponseBody> {
+    let text: string
+    try {
+        text = await response.text()
+    } catch {
+        throw new PromptSubmissionError(stageMessages[stage].network)
+    }
+
+    if (!text) return { data: null, isJson: false }
+
+    try {
+        return { data: JSON.parse(text), isJson: true }
+    } catch {
+        return { data: null, isJson: false }
+    }
+}
+
+function responseError(
+    response: Response,
+    body: ParsedResponseBody,
+    stage: SubmitStage,
+    maxUploadSizeMB: number
+) {
+    if (isAdminPromptErrorPayload(body.data)) {
+        return new PromptSubmissionError(body.data.error, body.data.field, body.data.code)
+    }
+
+    if (response.status === 401) {
+        return new PromptSubmissionError(
+            adminPromptErrorMessages.SESSION_EXPIRED,
+            undefined,
+            "SESSION_EXPIRED"
+        )
+    }
+
+    if (stage === "upload" && response.status === 413) {
+        return new PromptSubmissionError(
+            `图片大小不能超过 ${maxUploadSizeMB}MB。`,
+            "image",
+            "UPLOAD_FILE_TOO_LARGE"
+        )
+    }
+
+    if (!body.isJson) {
+        return new PromptSubmissionError(stageMessages[stage].unavailable)
+    }
+
+    if (stage === "save" && response.status === 404) {
+        return new PromptSubmissionError("要保存的 Prompt 不存在，可能已被删除，请返回后台列表确认。")
+    }
+
+    return new PromptSubmissionError(stageMessages[stage].failed)
+}
+
+function getFieldErrorProps(field: AdminPromptField, error?: string) {
+    return {
+        "aria-invalid": error ? true : undefined,
+        "aria-describedby": error ? getFieldErrorId(field) : undefined,
+    } as const
+}
+
+function FieldError({ field, error }: { field: AdminPromptField; error?: string }) {
+    if (!error) return null
+
+    return (
+        <p id={getFieldErrorId(field)} role="alert" className="text-sm text-red-500">
+            {error}
+        </p>
+    )
+}
 
 interface PromptFormProps {
     initialData?: Partial<Prompt>
@@ -25,8 +225,10 @@ interface PromptFormProps {
 export function PromptForm({ initialData, isEditing = false }: PromptFormProps) {
     const router = useRouter()
     const settings = useRuntimeSettings()
-    const [loading, setLoading] = useState(false)
-    const [uploading, setUploading] = useState(false)
+    const [submitState, setSubmitState] = useState<SubmitState>("idle")
+    const loading = submitState !== "idle"
+    const uploading = submitState === "uploading"
+    const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
     const [pendingFile, setPendingFile] = useState<File | null>(null)
     const [previewUrl, setPreviewUrl] = useState("")
     const initialModel = aiModels.find(item => (
@@ -59,7 +261,6 @@ export function PromptForm({ initialData, isEditing = false }: PromptFormProps) 
         format: string
         thumbnailSize?: number
     } | null>(null)
-    const [pendingImageMeta, setPendingImageMeta] = useState<{ name: string; size: number } | null>(null)
 
     const formatBytes = (bytes: number) => {
         if (bytes < 1024) return `${bytes} B`
@@ -84,24 +285,61 @@ export function PromptForm({ initialData, isEditing = false }: PromptFormProps) 
         if (previewUrl) URL.revokeObjectURL(previewUrl)
         setPreviewUrl("")
         setPendingFile(null)
-        setPendingImageMeta(null)
+    }
+
+    const clearFieldError = (field: AdminPromptField) => {
+        setFieldErrors(current => {
+            if (!current[field]) return current
+            const next = { ...current }
+            delete next[field]
+            return next
+        })
+    }
+
+    const focusField = (field: AdminPromptField) => {
+        window.requestAnimationFrame(() => {
+            document.getElementById(fieldIds[field])?.focus()
+        })
+    }
+
+    const validateForm = () => {
+        const errors: FieldErrors = {}
+
+        if (!title.trim()) errors.title = adminPromptErrorMessages.PROMPT_TITLE_REQUIRED
+        if (!description.trim()) errors.description = adminPromptErrorMessages.PROMPT_DESCRIPTION_REQUIRED
+        if (!content.trim()) errors.content = adminPromptErrorMessages.PROMPT_CONTENT_REQUIRED
+        if (status === promptStatusIds.published && !imageUrl.trim() && !pendingFile) {
+            errors.image = adminPromptErrorMessages.PROMPT_IMAGE_REQUIRED
+        }
+
+        setFieldErrors(errors)
+        const firstInvalidField = adminPromptFields.find(field => errors[field])
+        if (firstInvalidField) focusField(firstInvalidField)
+
+        return !firstInvalidField
     }
 
     const uploadSelectedFile = async (file: File) => {
-        setUploading(true)
         const formData = new FormData()
         formData.append("file", file)
 
-        const res = await fetch("/api/upload", {
-            method: "POST",
-            body: formData,
-        })
+        const response = await fetchWithTimeout(
+            "/api/upload",
+            { method: "POST", body: formData },
+            UPLOAD_TIMEOUT_MS,
+            "upload"
+        )
+        const responseBody = await readResponseBody(response, "upload")
 
-        const data = await res.json().catch(() => null)
-        if (!res.ok) {
-            throw new Error(data?.error || "上传失败")
+        if (!response.ok) {
+            throw responseError(response, responseBody, "upload", settings.upload.maxUploadSizeMB)
         }
 
+        if (!responseBody.isJson || !isUploadResponse(responseBody.data)) {
+            throw new PromptSubmissionError("图片上传服务返回的数据异常，请稍后重试。")
+        }
+
+        const data = responseBody.data
         setUploadMeta({
             originalSize: data.originalSize,
             compressedSize: data.compressedSize,
@@ -113,8 +351,8 @@ export function PromptForm({ initialData, isEditing = false }: PromptFormProps) 
         })
 
         return {
-            imageUrl: data.url as string,
-            thumbnailUrl: (data.thumbnailUrl || "") as string,
+            imageUrl: data.url,
+            thumbnailUrl: data.thumbnailUrl || "",
         }
     }
 
@@ -123,21 +361,23 @@ export function PromptForm({ initialData, isEditing = false }: PromptFormProps) 
         const file = e.target.files?.[0]
         if (!file) return
 
-        if (!settings.upload.allowedTypes.includes(file.type)) {
-            toast.error("仅支持 JPG、PNG、WebP 图片")
-            input.value = ""
-            return
-        }
+        const validationError = !settings.upload.allowedTypes.includes(file.type)
+            ? adminPromptErrorMessages.UPLOAD_UNSUPPORTED_TYPE
+            : file.size > settings.upload.maxUploadSize
+                ? `图片大小不能超过 ${settings.upload.maxUploadSizeMB}MB。`
+                : null
 
-        if (file.size > settings.upload.maxUploadSize) {
-            toast.error(`图片大小不能超过 ${settings.upload.maxUploadSizeMB}MB`)
+        if (validationError) {
+            clearPendingPreview()
+            setUploadMeta(null)
+            setFieldErrors(current => ({ ...current, image: validationError }))
             input.value = ""
             return
         }
 
         clearPendingPreview()
+        if (fieldErrors.image) clearFieldError("image")
         setPendingFile(file)
-        setPendingImageMeta({ name: file.name, size: file.size })
         setUploadMeta(null)
         setPreviewUrl(URL.createObjectURL(file))
         input.value = ""
@@ -145,13 +385,9 @@ export function PromptForm({ initialData, isEditing = false }: PromptFormProps) 
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-        const shouldPublish = status === promptStatusIds.published
-        if (shouldPublish && !imageUrl && !pendingFile) {
-            toast.error("发布前请先选择图片")
-            return
-        }
+        if (!validateForm()) return
 
-        setLoading(true)
+        setSubmitState(pendingFile ? "uploading" : "saving")
         try {
             let nextImageUrl = imageUrl
             let nextThumbnailUrl = thumbnailUrl
@@ -163,6 +399,7 @@ export function PromptForm({ initialData, isEditing = false }: PromptFormProps) 
                 setImageUrl(nextImageUrl)
                 setThumbnailUrl(nextThumbnailUrl)
                 clearPendingPreview()
+                setSubmitState("saving")
             }
 
             const selectedModel = aiModels.find(item => item.id === modelId)
@@ -184,50 +421,79 @@ export function PromptForm({ initialData, isEditing = false }: PromptFormProps) 
             }
 
             const method = isEditing ? "PUT" : "POST"
-            const url = "/api/prompts"
+            const response = await fetchWithTimeout(
+                "/api/prompts",
+                {
+                    method,
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload),
+                },
+                SAVE_TIMEOUT_MS,
+                "save"
+            )
+            const responseBody = await readResponseBody(response, "save")
 
-            const res = await fetch(url, {
-                method,
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload),
-            })
-
-            if (res.ok) {
-                toast.success(isEditing ? "已保存修改" : "已发布 Prompt")
-                router.push("/admin")
-                router.refresh()
-            } else {
-                const data = await res.json().catch(() => null)
-                toast.error(data?.error || "保存失败")
+            if (!response.ok) {
+                throw responseError(response, responseBody, "save", settings.upload.maxUploadSizeMB)
             }
+
+            if (!responseBody.isJson || !isSavedPromptResponse(responseBody.data)) {
+                throw new PromptSubmissionError(
+                    "服务器返回异常，无法确认 Prompt 是否已保存；请先在新标签页检查后台列表后再重试。"
+                )
+            }
+
+            toast.success(isEditing ? "已保存修改" : "已发布 Prompt")
+            router.push("/admin")
+            router.refresh()
         } catch (error) {
-            toast.error(error instanceof Error ? error.message : "保存出错")
+            const failure = error instanceof PromptSubmissionError
+                ? error
+                : new PromptSubmissionError("提交过程中发生未知错误，请稍后重试。")
+
+            if (failure.code && imageReselectErrorCodes.has(failure.code)) {
+                clearPendingPreview()
+                setUploadMeta(null)
+            }
+
+            if (failure.field) {
+                setFieldErrors(current => ({ ...current, [failure.field!]: failure.message }))
+                focusField(failure.field)
+            } else {
+                toast.error(failure.message, { id: SUBMIT_ERROR_TOAST_ID })
+            }
         } finally {
-            setLoading(false)
-            setUploading(false)
+            setSubmitState("idle")
         }
     }
 
     const displayImageUrl = previewUrl || imageUrl
 
     return (
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <form noValidate onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* Left: Image Upload */}
             <div className="space-y-4">
-                <Card className="bg-card border-dashed border-2 overflow-hidden aspect-[2/3] flex items-center justify-center relative hover:border-primary/50 transition-colors group">
+                <Card
+                    {...getFieldErrorProps("image", fieldErrors.image)}
+                    className={cn(
+                        "bg-card border-dashed border-2 overflow-hidden aspect-[2/3] flex items-center justify-center relative hover:border-primary/50 transition-colors group",
+                        "focus-within:border-ring focus-within:ring-ring/50 focus-within:ring-[3px]",
+                        "aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40"
+                    )}
+                >
                     {displayImageUrl ? (
                         <>
                             {previewUrl ? (
                                 // 本地预览不会写入服务器，提交表单时才会上传并保存。
                                 <img
                                     src={previewUrl}
-                                    alt="Preview"
+                                    alt="Prompt 图片预览"
                                     className="absolute inset-0 h-full w-full object-contain p-2"
                                 />
                             ) : (
                                 <Image
                                     src={getImageUrl(imageUrl)}
-                                    alt="Preview"
+                                    alt="Prompt 图片预览"
                                     fill
                                     className="object-contain p-2"
                                 />
@@ -242,7 +508,9 @@ export function PromptForm({ initialData, isEditing = false }: PromptFormProps) 
                                         setThumbnailUrl("")
                                     }
                                     setUploadMeta(null)
+                                    clearFieldError("image")
                                 }}
+                                aria-label="移除图片"
                                 className="absolute top-2 right-2 z-20 bg-black/50 p-2 rounded-full hover:bg-black/80 text-white opacity-0 group-hover:opacity-100 transition-opacity"
                             >
                                 <X className="w-4 h-4" />
@@ -269,23 +537,28 @@ export function PromptForm({ initialData, isEditing = false }: PromptFormProps) 
                         </div>
                     )}
                     <input
+                        id={fieldIds.image}
                         type="file"
                         accept="image/jpeg,image/png,image/webp"
+                        aria-label="Prompt 示例图片"
+                        {...getFieldErrorProps("image", fieldErrors.image)}
                         onChange={handleFileChange}
                         className="absolute inset-0 opacity-0 cursor-pointer disabled:cursor-not-allowed"
                         disabled={uploading}
                     />
                 </Card>
 
-                {pendingImageMeta && (
+                <FieldError field="image" error={fieldErrors.image} />
+
+                {pendingFile && (
                     <div className="bg-card border border-border rounded-lg p-4 text-sm space-y-1">
                         <div className="flex justify-between gap-4">
                             <span className="text-muted-foreground">待发布图片</span>
-                            <span className="truncate">{pendingImageMeta.name}</span>
+                            <span className="truncate">{pendingFile.name}</span>
                         </div>
                         <div className="flex justify-between">
                             <span className="text-muted-foreground">原始大小</span>
-                            <span>{formatBytes(pendingImageMeta.size)}</span>
+                            <span>{formatBytes(pendingFile.size)}</span>
                         </div>
                         <p className="text-xs text-muted-foreground pt-2">
                             当前仅本地预览；提交表单后，才会压缩并写入服务器。
@@ -360,30 +633,42 @@ export function PromptForm({ initialData, isEditing = false }: PromptFormProps) 
             {/* Right: Info Form */}
             <div className="space-y-6 pb-4">
                 <div className="space-y-2">
-                    <Label>标题</Label>
+                    <Label htmlFor={fieldIds.title}>标题</Label>
                     <Input
+                        id={fieldIds.title}
                         value={title}
-                        onChange={e => setTitle(e.target.value)}
+                        onChange={e => {
+                            setTitle(e.target.value)
+                            if (fieldErrors.title) clearFieldError("title")
+                        }}
+                        {...getFieldErrorProps("title", fieldErrors.title)}
                         placeholder="如: Cyberpunk Street"
                         className="bg-background"
                         required
                     />
+                    <FieldError field="title" error={fieldErrors.title} />
                 </div>
 
                 <div className="space-y-2">
-                    <Label>中文描述 (Description)</Label>
+                    <Label htmlFor={fieldIds.description}>中文描述 (Description)</Label>
                     <Input
+                        id={fieldIds.description}
                         value={description}
-                        onChange={e => setDescription(e.target.value)}
+                        onChange={e => {
+                            setDescription(e.target.value)
+                            if (fieldErrors.description) clearFieldError("description")
+                        }}
+                        {...getFieldErrorProps("description", fieldErrors.description)}
                         placeholder="简短的中文介绍..."
                         className="bg-background"
                         required
                     />
+                    <FieldError field="description" error={fieldErrors.description} />
                 </div>
 
                 <div className="space-y-2">
                     <div className="flex items-center justify-between gap-3">
-                        <Label>Prompt 内容</Label>
+                        <Label htmlFor={fieldIds.content}>Prompt 内容</Label>
                         <Button
                             type="button"
                             variant={contentPublic ? "secondary" : "outline"}
@@ -396,12 +681,18 @@ export function PromptForm({ initialData, isEditing = false }: PromptFormProps) 
                         </Button>
                     </div>
                     <Textarea
+                        id={fieldIds.content}
                         value={content}
-                        onChange={e => setContent(e.target.value)}
+                        onChange={e => {
+                            setContent(e.target.value)
+                            if (fieldErrors.content) clearFieldError("content")
+                        }}
+                        {...getFieldErrorProps("content", fieldErrors.content)}
                         placeholder="Complete prompt text..."
                         className="bg-background min-h-[180px] max-h-[45vh] overflow-y-auto font-mono text-sm"
                         required
                     />
+                    <FieldError field="content" error={fieldErrors.content} />
                 </div>
 
                 <div className="space-y-2">
@@ -420,7 +711,16 @@ export function PromptForm({ initialData, isEditing = false }: PromptFormProps) 
 
                 <div className="space-y-2">
                     <Label>状态</Label>
-                    <Select value={status} onValueChange={(value) => setStatus(value as Prompt["status"])}>
+                    <Select
+                        value={status}
+                        onValueChange={(value) => {
+                            const nextStatus = value as Prompt["status"]
+                            setStatus(nextStatus)
+                            if (nextStatus !== promptStatusIds.published && fieldErrors.image) {
+                                clearFieldError("image")
+                            }
+                        }}
+                    >
                         <SelectTrigger className="bg-background">
                             <SelectValue />
                         </SelectTrigger>
@@ -443,12 +743,12 @@ export function PromptForm({ initialData, isEditing = false }: PromptFormProps) 
                     <Button
                         type="submit"
                         className="w-full"
-                        disabled={loading || (status === promptStatusIds.published && !imageUrl && !pendingFile)}
+                        disabled={loading}
                     >
                         {loading ? (
                             <>
                                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                {uploading ? "正在上传图片" : isEditing ? "保存修改" : "发布 Prompt"}
+                                {uploading ? "正在上传图片" : isEditing ? "正在保存修改" : "正在保存 Prompt"}
                             </>
                         ) : (
                             isEditing ? "保存修改" : "发布 Prompt"

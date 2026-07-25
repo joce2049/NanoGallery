@@ -122,7 +122,8 @@ export function ClientGallery({ initialPrompts, categories: initialCategories, t
 
     useEffect(() => {
         const updateColumns = () => {
-            if (window.innerWidth >= 1280) setColumns(4)
+            if (window.innerWidth >= 1536) setColumns(5)
+            else if (window.innerWidth >= 1280) setColumns(4)
             else if (window.innerWidth >= 1024) setColumns(3)
             else setColumns(2)
         }

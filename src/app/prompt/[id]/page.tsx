@@ -146,7 +146,9 @@ export default async function PromptDetailPage({ params }: PromptDetailPageProps
                         <h2 className="text-2xl font-bold mb-6">相关 Prompts</h2>
                         <div className="masonry-grid">
                             {relatedPrompts.map((relatedPrompt) => (
-                                <ImageCard key={relatedPrompt.id} prompt={relatedPrompt} />
+                                <div key={relatedPrompt.id} className="masonry-item">
+                                    <ImageCard prompt={relatedPrompt} />
+                                </div>
                             ))}
                         </div>
                     </section>

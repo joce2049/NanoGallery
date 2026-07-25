@@ -154,6 +154,13 @@
     }
   }
 
+  @media (min-width: 1536px) {
+    .masonry-grid {
+      column-count: 5;
+      column-gap: 0.75rem;
+    }
+  }
+
   .masonry-item {
     break-inside: avoid;
     margin-bottom: 0.5rem;

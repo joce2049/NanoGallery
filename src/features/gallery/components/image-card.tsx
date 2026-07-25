@@ -31,7 +31,7 @@ export function ImageCard({ prompt, onCardClick }: ImageCardProps) {
       className="group overflow-hidden border-border/50 bg-card hover:border-accent/50 transition-all duration-300 cursor-pointer rounded-lg p-0"
       onClick={onCardClick}
     >
-      <div className="relative w-full" style={ratio ? { aspectRatio: ratio } : undefined}>
+      <div className="relative w-full bg-muted/20" style={ratio ? { aspectRatio: ratio } : undefined}>
         {!loaded && !failed && (
           <div className="absolute inset-0 z-10 animate-pulse bg-gradient-to-br from-muted via-muted/70 to-background" />
         )}
@@ -50,7 +50,7 @@ export function ImageCard({ prompt, onCardClick }: ImageCardProps) {
             fill
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             loading="lazy"
-            className={`object-cover transition-all duration-300 group-hover:scale-105 ${loaded ? "opacity-100" : "opacity-0"}`}
+            className={`object-contain transition-opacity duration-300 ${loaded ? "opacity-100" : "opacity-0"}`}
             onLoad={() => setLoaded(true)}
             onError={handleError}
           />
@@ -62,7 +62,7 @@ export function ImageCard({ prompt, onCardClick }: ImageCardProps) {
             height={0}
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             loading="lazy"
-            className={`w-full h-auto transition-all duration-300 group-hover:scale-105 block ${loaded ? "opacity-100" : "opacity-0"}`}
+            className={`w-full h-auto object-contain transition-opacity duration-300 block ${loaded ? "opacity-100" : "opacity-0"}`}
             style={{ width: '100%', height: 'auto' }}
             onLoad={() => setLoaded(true)}
             onError={handleError}
