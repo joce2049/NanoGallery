@@ -5,7 +5,7 @@ import { Card } from "@/shared/ui/card"
 import type { Prompt } from "@/core/types"
 import { getPromptPreviewUrl } from "@/shared/lib/utils"
 import { Eye, ImageOff } from "lucide-react"
-import { useState } from "react"
+import { useState, type SyntheticEvent } from "react"
 
 interface ImageCardProps {
   prompt: Prompt
@@ -15,11 +15,21 @@ interface ImageCardProps {
 export function ImageCard({ prompt, onCardClick }: ImageCardProps) {
   const [loaded, setLoaded] = useState(false)
   const [failed, setFailed] = useState(false)
+  const [naturalRatio, setNaturalRatio] = useState<string>()
 
-  // 用管理员填写的图片比例预留空间，减少加载时的布局抖动（无比例时回退到自然高度）
-  const ratio = prompt.metadata?.aspectRatio?.includes(":")
+  // 先用管理员填写的比例预留空间，图片加载后切换为真实比例，避免留白或静态裁切。
+  const metadataRatio = prompt.metadata?.aspectRatio?.includes(":")
     ? prompt.metadata.aspectRatio.replace(":", " / ")
     : undefined
+  const displayRatio = naturalRatio || metadataRatio
+
+  const handleLoad = (event: SyntheticEvent<HTMLImageElement>) => {
+    const image = event.currentTarget
+    if (metadataRatio && image.naturalWidth > 0 && image.naturalHeight > 0) {
+      setNaturalRatio(`${image.naturalWidth} / ${image.naturalHeight}`)
+    }
+    setLoaded(true)
+  }
 
   const handleError = () => {
     setFailed(true)
@@ -31,27 +41,27 @@ export function ImageCard({ prompt, onCardClick }: ImageCardProps) {
       className="group overflow-hidden border-border/50 bg-card hover:border-accent/50 transition-all duration-300 cursor-pointer rounded-lg p-0"
       onClick={onCardClick}
     >
-      <div className="relative w-full bg-muted/20" style={ratio ? { aspectRatio: ratio } : undefined}>
+      <div className="relative w-full bg-muted/20" style={displayRatio ? { aspectRatio: displayRatio } : undefined}>
         {!loaded && !failed && (
           <div className="absolute inset-0 z-10 animate-pulse bg-gradient-to-br from-muted via-muted/70 to-background" />
         )}
 
         {failed ? (
           <div
-            className={`flex flex-col items-center justify-center gap-2 bg-muted/40 p-4 text-center text-muted-foreground ${ratio ? "absolute inset-0" : "min-h-[160px] w-full"}`}
+            className={`flex flex-col items-center justify-center gap-2 bg-muted/40 p-4 text-center text-muted-foreground ${displayRatio ? "absolute inset-0" : "min-h-[160px] w-full"}`}
           >
             <ImageOff className="h-6 w-6" />
             <span className="line-clamp-2 text-xs">{prompt.title}</span>
           </div>
-        ) : ratio ? (
+        ) : metadataRatio ? (
           <Image
             src={getPromptPreviewUrl(prompt)}
             alt={prompt.title}
             fill
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             loading="lazy"
-            className={`object-contain transition-opacity duration-300 ${loaded ? "opacity-100" : "opacity-0"}`}
-            onLoad={() => setLoaded(true)}
+            className={`object-contain transition-all duration-300 group-hover:scale-105 ${loaded ? "opacity-100" : "opacity-0"}`}
+            onLoad={handleLoad}
             onError={handleError}
           />
         ) : (
@@ -62,9 +72,9 @@ export function ImageCard({ prompt, onCardClick }: ImageCardProps) {
             height={0}
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             loading="lazy"
-            className={`w-full h-auto object-contain transition-opacity duration-300 block ${loaded ? "opacity-100" : "opacity-0"}`}
+            className={`w-full h-auto object-contain transition-all duration-300 group-hover:scale-105 block ${loaded ? "opacity-100" : "opacity-0"}`}
             style={{ width: '100%', height: 'auto' }}
-            onLoad={() => setLoaded(true)}
+            onLoad={handleLoad}
             onError={handleError}
           />
         )}
