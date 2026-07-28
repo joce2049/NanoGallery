@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { unlink } from "fs/promises";
 import path from "path";
 import { isAuthenticated } from "@/server/auth";
 import { UPLOADS_DIR } from "@/server/storage-paths";
@@ -124,28 +125,28 @@ export async function POST(request: Request) {
     let outputWidth = width;
     let outputHeight = height;
     try {
-        [compressedBuffer, thumbnailBuffer] = await Promise.all([
-            sharp(buffer, { failOn: "error" })
-                .rotate()
-                .resize({
-                    width: width >= height ? uploadConfig.maxDimension : undefined,
-                    height: height > width ? uploadConfig.maxDimension : undefined,
-                    fit: "inside",
-                    withoutEnlargement: true,
-                })
-                .webp({ quality: uploadConfig.webpQuality })
-                .toBuffer(),
-            sharp(buffer, { failOn: "error" })
-                .rotate()
-                .resize({
-                    width: uploadConfig.thumbnailDimension,
-                    height: uploadConfig.thumbnailDimension,
-                    fit: "inside",
-                    withoutEnlargement: true,
-                })
-                .webp({ quality: uploadConfig.thumbnailQuality })
-                .toBuffer(),
-        ]);
+        // 顺序处理并只对原图解码一次：先生成主图，再从已缩小的主图派生缩略图，
+        // 避免两条 Sharp 管线并行 / 对大图重复解码导致内存峰值翻倍（小内存环境下会偶发 OOM）。
+        compressedBuffer = await sharp(buffer, { failOn: "error" })
+            .rotate()
+            .resize({
+                width: width >= height ? uploadConfig.maxDimension : undefined,
+                height: height > width ? uploadConfig.maxDimension : undefined,
+                fit: "inside",
+                withoutEnlargement: true,
+            })
+            .webp({ quality: uploadConfig.webpQuality })
+            .toBuffer();
+
+        thumbnailBuffer = await sharp(compressedBuffer)
+            .resize({
+                width: uploadConfig.thumbnailDimension,
+                height: uploadConfig.thumbnailDimension,
+                fit: "inside",
+                withoutEnlargement: true,
+            })
+            .webp({ quality: uploadConfig.thumbnailQuality })
+            .toBuffer();
 
         const outputMetadata = await sharp(compressedBuffer).metadata();
         outputWidth = outputMetadata.width || width;
@@ -163,9 +164,17 @@ export async function POST(request: Request) {
 
     try {
         await atomicWriteFile(filepath, compressedBuffer);
+    } catch (error) {
+        console.error("Upload storage error (main):", error);
+        return uploadStorageErrorResponse(error, "UPLOAD_STORAGE_FAILED");
+    }
+
+    try {
         await atomicWriteFile(thumbnailPath, thumbnailBuffer);
     } catch (error) {
-        console.error("Upload storage error:", error);
+        console.error("Upload storage error (thumbnail):", error);
+        // 缩略图写入失败时清理已落盘的主图，避免残留孤儿文件
+        await unlink(filepath).catch(() => undefined);
         return uploadStorageErrorResponse(error, "UPLOAD_STORAGE_FAILED");
     }
 
