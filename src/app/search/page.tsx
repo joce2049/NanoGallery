@@ -3,12 +3,12 @@
 import { SearchBar } from "@/features/search/components/search-bar"
 import { PopularTags } from "@/features/gallery/components/popular-tags"
 import { SearchResultCard } from "@/features/search/components/search-result-card"
-import { Button } from "@/shared/ui/button"
+import { SegmentedControl } from "@/shared/ui/segmented-control"
 import { sortPrompts } from "@/core/data-utils"
 import type { Prompt, SortBy, Tag } from "@/core/types"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useState, useEffect, Suspense } from "react"
-import { siteConfig } from "@/config"
+import { siteConfig, sortOptions } from "@/config"
 import { useRuntimeSettings } from "@/shared/lib/use-runtime-settings"
 
 function SearchPageContent() {
@@ -118,29 +118,12 @@ function SearchPageContent() {
                             <h2 className="text-2xl font-bold">
                                 搜索结果 {sortedResults.length > 0 && `(${sortedResults.length})`}
                             </h2>
-                            <div className="flex items-center gap-2">
-                                <Button
-                                    variant={sortBy === "latest" ? "default" : "outline"}
-                                    size="sm"
-                                    onClick={() => updateSort("latest")}
-                                >
-                                    最新
-                                </Button>
-                                <Button
-                                    variant={sortBy === "popular" ? "default" : "outline"}
-                                    size="sm"
-                                    onClick={() => updateSort("popular")}
-                                >
-                                    热门
-                                </Button>
-                                <Button
-                                    variant={sortBy === "trending" ? "default" : "outline"}
-                                    size="sm"
-                                    onClick={() => updateSort("trending")}
-                                >
-                                    趋势
-                                </Button>
-                            </div>
+                            <SegmentedControl
+                                value={sortBy}
+                                onValueChange={updateSort}
+                                options={sortOptions}
+                                label="排序方式"
+                            />
                         </div>
 
                         {sortedResults.length > 0 ? (

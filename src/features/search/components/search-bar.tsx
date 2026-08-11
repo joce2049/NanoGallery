@@ -86,7 +86,19 @@ export function SearchBar({ defaultValue = "", onSearch, className = "" }: Searc
                         setShowSuggestions(true)
                     }}
                     onFocus={() => setShowSuggestions(true)}
-                    className="pl-10 pr-20"
+                    // 扁平化：去掉基类的 shadow-xs。
+                    // 聚焦态改走品牌青而非默认 ring：3px 灰环 → 1px 青环 + 青色描边，
+                    // 并把 border-color 纳入过渡，否则颜色是硬切。
+                    // 另屏蔽 WebKit 给 type=search 自带的原生清空按钮：本组件已有自定义的 X
+                    // 按钮，不屏蔽会在有值时并排出现两个叉。Tailwind Preflight 只重置了
+                    // ::-webkit-search-decoration，没管 ::-webkit-search-cancel-button。
+                    className={[
+                        "pl-10 pr-10 shadow-none",
+                        "transition-[color,box-shadow,border-color] duration-[var(--duration-quick)] ease-[var(--ease-smooth-out)]",
+                        "focus-visible:border-cyan-500/50 focus-visible:ring-1 focus-visible:ring-cyan-500/15",
+                        "dark:focus-visible:border-cyan-100/40 dark:focus-visible:ring-cyan-100/10",
+                        "[&::-webkit-search-cancel-button]:[-webkit-appearance:none]",
+                    ].join(" ")}
                     autoComplete="off"
                 />
                 {query && (
@@ -94,27 +106,18 @@ export function SearchBar({ defaultValue = "", onSearch, className = "" }: Searc
                         type="button"
                         variant="ghost"
                         size="icon"
-                        className="absolute right-9 top-1/2 -translate-y-1/2 h-7 w-7"
+                        className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
                         onClick={handleClear}
                         aria-label="清空搜索"
                     >
                         <X className="h-4 w-4" />
                     </Button>
                 )}
-                <Button
-                    type="submit"
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
-                    aria-label="搜索"
-                >
-                    <Search className="h-4 w-4" />
-                </Button>
             </form>
 
             {/* Suggestions Dropdown */}
             {showSuggestions && suggestions.length > 0 && (
-                <div className="absolute top-full left-0 right-0 mt-1 z-50 bg-popover text-popover-foreground rounded-md border shadow-md animate-in fade-in-0 zoom-in-95">
+                <div className="absolute top-full left-0 right-0 mt-1 z-50 bg-popover text-popover-foreground rounded-md border shadow-md animate-in fade-in-0 zoom-in-[0.97] duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)]">
                     <div className="p-1">
                         <p className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
                             建议标签

@@ -1,11 +1,11 @@
 "use client"
 
-import { Button } from "@/shared/ui/button"
+import { SegmentedControl } from "@/shared/ui/segmented-control"
 import { useState, useEffect } from "react"
 import { ImageCard } from "@/features/gallery/components/image-card"
 import { ImageModal } from "./image-modal"
 import { PopularTags } from "@/features/gallery/components/popular-tags"
-import { siteConfig, uiText } from "@/config"
+import { siteConfig, sortOptions } from "@/config"
 import { getAllCategories, sortPrompts, paginatePrompts, getTagBySlug } from "@/core/data-utils"
 import type { Category, Prompt, SortBy, Tag } from "@/core/types"
 import type { PublicRuntimeSettings } from "@/core/settings"
@@ -165,29 +165,12 @@ export function ClientGallery({ initialPrompts, categories: initialCategories, t
                 <section className="mb-6">
                     <div className="flex items-center justify-between mb-4 flex-wrap gap-4">
                         <h2 className="text-xl font-bold">探索作品</h2>
-                        <div className="flex items-center gap-2 flex-wrap">
-                            <Button
-                                variant={sortBy === "latest" ? "default" : "outline"}
-                                size="sm"
-                                onClick={() => updateSort("latest")}
-                            >
-                                {uiText.sort.latest}
-                            </Button>
-                            <Button
-                                variant={sortBy === "popular" ? "default" : "outline"}
-                                size="sm"
-                                onClick={() => updateSort("popular")}
-                            >
-                                {uiText.sort.popular}
-                            </Button>
-                            <Button
-                                variant={sortBy === "trending" ? "default" : "outline"}
-                                size="sm"
-                                onClick={() => updateSort("trending")}
-                            >
-                                {uiText.sort.trending}
-                            </Button>
-                        </div>
+                        <SegmentedControl
+                            value={sortBy}
+                            onValueChange={updateSort}
+                            options={sortOptions}
+                            label="排序方式"
+                        />
                     </div>
                 </section>
 

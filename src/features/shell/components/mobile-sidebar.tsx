@@ -135,7 +135,7 @@ function MobileSidebarContent({ isLoggedIn = false, siteName, initialCategories 
                         <Link href="/search" onClick={() => setOpen(false)}>
                             <Button
                                 variant="outline"
-                                className="w-full justify-start text-muted-foreground hover:text-foreground"
+                                className="w-full justify-start text-muted-foreground hover:text-foreground shadow-none"
                             >
                                 <Search className="mr-2 h-4 w-4" />
                                 搜索...

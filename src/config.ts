@@ -3,7 +3,7 @@
  * 在这里集中管理所有网站配置，包括站点信息、分类、标签、UI 文本等
  */
 
-import type { Category, Prompt, Tag } from "@/core/types"
+import type { Category, Prompt, SortBy, Tag } from "@/core/types"
 
 /**
  * 站点基本信息配置
@@ -440,3 +440,13 @@ export const uiText = {
         trending: "趋势",
     },
 } as const
+
+/**
+ * 前台排序分段控件的选项，数组顺序即展示顺序。
+ * 首页画廊与搜索页共用同一份，避免两处文案 / 顺序漂移。
+ */
+export const sortOptions: readonly { value: SortBy; label: string }[] = [
+    { value: "latest", label: uiText.sort.latest },
+    { value: "popular", label: uiText.sort.popular },
+    { value: "trending", label: uiText.sort.trending },
+]

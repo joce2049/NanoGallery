@@ -22,6 +22,7 @@ import {
     type AdminPromptErrorCode,
     type AdminPromptField,
 } from "@/shared/lib/admin-prompt-errors"
+import { replayAnimation } from "@/shared/lib/motion"
 import { toast } from "sonner"
 
 const UPLOAD_TIMEOUT_MS = 120_000
@@ -211,7 +212,7 @@ function FieldError({ field, error }: { field: AdminPromptField; error?: string 
     if (!error) return null
 
     return (
-        <p id={getFieldErrorId(field)} role="alert" className="text-sm text-red-500">
+        <p id={getFieldErrorId(field)} role="alert" className="t-error-msg text-sm text-red-500">
             {error}
         </p>
     )
@@ -297,6 +298,12 @@ export function PromptForm({ initialData, isEditing = false }: PromptFormProps) 
     }
 
     const focusField = (field: AdminPromptField) => {
+        // 抖动 + 聚焦。抖动必须走 replayAnimation：同一字段连续报同样的错时元素类名
+        // 没有变化，不强制回流关键帧就不会重跑。
+        replayAnimation(
+            document.querySelector<HTMLElement>(`[data-shake-field="${field}"]`),
+            "is-shaking",
+        )
         window.requestAnimationFrame(() => {
             document.getElementById(fieldIds[field])?.focus()
         })
@@ -475,8 +482,9 @@ export function PromptForm({ initialData, isEditing = false }: PromptFormProps) 
             <div className="space-y-4">
                 <Card
                     {...getFieldErrorProps("image", fieldErrors.image)}
+                    data-shake-field="image"
                     className={cn(
-                        "bg-card border-dashed border-2 overflow-hidden aspect-[2/3] flex items-center justify-center relative hover:border-primary/50 transition-colors group",
+                        "t-shake bg-card border-dashed border-2 overflow-hidden aspect-[2/3] flex items-center justify-center relative hover:border-primary/50 transition-colors group",
                         "focus-within:border-ring focus-within:ring-ring/50 focus-within:ring-[3px]",
                         "aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40"
                     )}
@@ -642,8 +650,9 @@ export function PromptForm({ initialData, isEditing = false }: PromptFormProps) 
                             if (fieldErrors.title) clearFieldError("title")
                         }}
                         {...getFieldErrorProps("title", fieldErrors.title)}
+                        data-shake-field="title"
                         placeholder="如: Cyberpunk Street"
-                        className="bg-background"
+                        className="t-shake bg-background"
                         required
                     />
                     <FieldError field="title" error={fieldErrors.title} />
@@ -659,8 +668,9 @@ export function PromptForm({ initialData, isEditing = false }: PromptFormProps) 
                             if (fieldErrors.description) clearFieldError("description")
                         }}
                         {...getFieldErrorProps("description", fieldErrors.description)}
+                        data-shake-field="description"
                         placeholder="简短的中文介绍..."
-                        className="bg-background"
+                        className="t-shake bg-background"
                         required
                     />
                     <FieldError field="description" error={fieldErrors.description} />
@@ -688,8 +698,9 @@ export function PromptForm({ initialData, isEditing = false }: PromptFormProps) 
                             if (fieldErrors.content) clearFieldError("content")
                         }}
                         {...getFieldErrorProps("content", fieldErrors.content)}
+                        data-shake-field="content"
                         placeholder="Complete prompt text..."
-                        className="bg-background min-h-[180px] max-h-[45vh] overflow-y-auto font-mono text-sm"
+                        className="t-shake bg-background min-h-[180px] max-h-[45vh] overflow-y-auto font-mono text-sm"
                         required
                     />
                     <FieldError field="content" error={fieldErrors.content} />

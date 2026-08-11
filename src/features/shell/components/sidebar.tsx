@@ -126,7 +126,7 @@ function SidebarContent({ isLoggedIn = false, siteName, initialCategories }: Sid
                     <Link href="/search">
                         <Button
                             variant="outline"
-                            className="w-full justify-start text-muted-foreground hover:text-foreground border-sidebar-border hover:bg-sidebar-accent"
+                            className="w-full justify-start text-muted-foreground hover:text-foreground border-sidebar-border hover:bg-sidebar-accent shadow-none"
                         >
                             <Search className="mr-2 h-4 w-4" />
                             搜索...
@@ -235,11 +235,11 @@ function SidebarContent({ isLoggedIn = false, siteName, initialCategories }: Sid
                         size="sm"
                         onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
                     >
-                        {mounted && theme === "dark" ? (
-                            <Sun className="mr-2 h-4 w-4" />
-                        ) : (
-                            <Moon className="mr-2 h-4 w-4" />
-                        )}
+                        {/* 同上：两枚图标同格交叉切换，避免条件渲染换元素导致过渡失效 */}
+                        <span className="t-icon-swap mr-2" data-state={mounted && theme === "dark" ? "b" : "a"}>
+                            <Moon data-icon="a" className="t-icon h-4 w-4" />
+                            <Sun data-icon="b" className="t-icon h-4 w-4" />
+                        </span>
                         切换主题
                     </Button>
 

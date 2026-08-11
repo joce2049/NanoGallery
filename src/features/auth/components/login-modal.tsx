@@ -1,7 +1,7 @@
 
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/shared/ui/button"
 import { Input } from "@/shared/ui/input"
@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Label } from "@/shared/ui/label"
 import { Loader2, Sparkles, Lock, User } from "lucide-react"
 import { TurnstileWidget } from "@/features/auth/components/turnstile-widget"
+import { replayAnimation } from "@/shared/lib/motion"
 
 interface LoginModalProps {
     open: boolean
@@ -23,7 +24,16 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
     const [turnstileResetSignal, setTurnstileResetSignal] = useState(0)
     const [error, setError] = useState("")
     const [loading, setLoading] = useState(false)
+    const credentialsRef = useRef<HTMLDivElement>(null)
     const router = useRouter()
+
+    // 登录失败：错误文案揭示 + 凭据区抖动。抖动必须走 replayAnimation，否则连续两次
+    // 同样的错误不会重跑关键帧。
+    const failLogin = (message: string) => {
+        setError(message)
+        setTurnstileResetSignal((value) => value + 1)
+        replayAnimation(credentialsRef.current, "is-shaking")
+    }
 
     const handleTurnstileStatus = useCallback(({ enabled }: { enabled: boolean }) => {
         setTurnstileEnabled(enabled)
@@ -54,12 +64,10 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
                 onOpenChange(false)
             } else {
                 const data = await res.json().catch(() => ({}))
-                setError(data.retryAfterSeconds ? `尝试过多，请 ${data.retryAfterSeconds} 秒后再试` : "登录信息或人机验证错误")
-                setTurnstileResetSignal((value) => value + 1)
+                failLogin(data.retryAfterSeconds ? `尝试过多，请 ${data.retryAfterSeconds} 秒后再试` : "登录信息或人机验证错误")
             }
         } catch {
-            setError("登录失败，请重试")
-            setTurnstileResetSignal((value) => value + 1)
+            failLogin("登录失败，请重试")
         } finally {
             setLoading(false)
         }
@@ -86,7 +94,7 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
                     </DialogHeader>
 
                     <form onSubmit={handleLogin} className="space-y-4">
-                        <div className="space-y-4">
+                        <div ref={credentialsRef} className="t-shake space-y-4">
                             <div className="space-y-2">
                                 <Label htmlFor="modal-username" className="text-xs font-medium text-zinc-400 ml-1">
                                     账号
@@ -100,7 +108,7 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
                                         type="text"
                                         value={username}
                                         onChange={(e) => setUsername(e.target.value)}
-                                        className="pl-9 h-10 bg-white/5 border-white/10 text-white placeholder:text-zinc-600 focus:bg-white/10 focus:border-cyan-100/60 transition-all rounded-xl"
+                                        className="pl-9 h-10 bg-white/5 border-white/10 text-white placeholder:text-zinc-600 focus:bg-white/10 focus:border-cyan-100/60 transition-[color,box-shadow,background-color,border-color] duration-[var(--duration-quick)] ease-[var(--ease-smooth-out)] rounded-xl"
                                         placeholder="请输入管理员账号"
                                     />
                                 </div>
@@ -118,7 +126,7 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
                                         type="password"
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
-                                        className="pl-9 h-10 bg-white/5 border-white/10 text-white placeholder:text-zinc-600 focus:bg-white/10 focus:border-cyan-100/60 transition-all rounded-xl"
+                                        className="pl-9 h-10 bg-white/5 border-white/10 text-white placeholder:text-zinc-600 focus:bg-white/10 focus:border-cyan-100/60 transition-[color,box-shadow,background-color,border-color] duration-[var(--duration-quick)] ease-[var(--ease-smooth-out)] rounded-xl"
                                         placeholder="••••••••"
                                     />
                                 </div>
@@ -131,7 +139,7 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
                         </div>
 
                         {error && (
-                            <div className="text-red-400 text-xs text-center bg-red-500/10 py-2 rounded-lg border border-red-500/20">
+                            <div className="t-error-msg text-red-400 text-xs text-center bg-red-500/10 py-2 rounded-lg border border-red-500/20">
                                 {error}
                             </div>
                         )}
@@ -140,7 +148,7 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
                             <Button
                                 type="submit"
                                 disabled={loading || (turnstileEnabled && !turnstileToken)}
-                                className="w-full h-10 bg-gradient-to-r from-slate-200 via-white to-cyan-100 hover:from-white hover:via-slate-100 hover:to-cyan-50 text-slate-950 border-0 shadow-lg shadow-cyan-100/20 rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
+                                className="w-full h-10 bg-gradient-to-r from-slate-200 via-white to-cyan-100 hover:from-white hover:via-slate-100 hover:to-cyan-50 text-slate-950 border-0 shadow-lg shadow-cyan-100/20 rounded-xl transition-[transform,box-shadow] duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] hover:scale-[1.02] active:scale-[0.98]"
                             >
                                 {loading ? (
                                     <>

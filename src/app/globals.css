@@ -74,6 +74,43 @@
   --sidebar-ring: oklch(0.439 0 0);
 }
 
+/* ── 动效令牌（transitions.dev Motion tokens） ──────────────────────────────
+   来源：.claude/skills/transitions-polish/_root.css。全站动效的时长 / 缓动 /
+   位移 / 缩放 / 模糊只从这里取值。选值规则是「按用途匹配，不按数值就近取整」：
+   一个 300ms 的弹窗关闭该走 --duration-quick(150ms)，因为两者用途相同。 */
+:root {
+  /* 时长 */
+  --duration-stagger: 40ms; /* 逐项错峰步长 */
+  --duration-micro: 80ms; /* 描边延迟、抖动分段、大件错峰 */
+  --duration-quick: 150ms; /* 弹窗/下拉关闭、文字切换、tooltip 出现 */
+  --duration-fast: 250ms; /* 图标切换、弹窗/下拉打开、Tabs 滑动、页面滑动 */
+  --duration-medium: 350ms; /* 面板关闭、Toast 关闭 */
+  --duration-slow: 400ms; /* 面板打开、骨架屏内容揭示、输入清空 */
+  --duration-very-slow: 500ms; /* 强调时刻：徽章出现、文字揭示、成功打勾 */
+  /* 缓动 */
+  --ease-smooth-out: cubic-bezier(0.22, 1, 0.36, 1); /* 默认：开合、滑动、尺寸/位置变化 */
+  --ease-in-out: ease-in-out; /* 图标切换、文字切换、文字揭示、骨架揭示 */
+  --ease-out: ease-out; /* tooltip 开合 */
+  --ease-linear: linear; /* 微光、骨架脉冲、loading 圈 */
+  --ease-bounce: cubic-bezier(0.34, 1.36, 0.64, 1); /* 徽章弹出、数字弹入 */
+  --ease-bounce-strong: cubic-bezier(0.34, 3.85, 0.64, 1); /* 悬停回弹（仅用于无裁切风险处） */
+  /* 位移（动画起点，终点恒为 0） */
+  --distance-micro: 4px; /* 文字切换、抖动过冲 */
+  --distance-small: 6px; /* 错误抖动（小段） */
+  --distance-base: 8px; /* 徽章斜向出现、页面滑动、错误抖动（大段） */
+  --distance-medium: 12px; /* 文字揭示 */
+  --distance-large: 30px; /* 成功打勾出现 */
+  /* 缩放（动画起点，终点恒为 1） */
+  --scale-large: 0.96; /* 弹窗开 / 关 */
+  --scale-medium: 0.97; /* 下拉打开 */
+  --scale-small: 0.98; /* tooltip 打开 */
+  --scale-tiny: 0.99; /* 下拉关闭 */
+  /* 模糊（动画起点，终点恒为 0） */
+  --blur-small: 2px; /* 面板揭示、图标切换、文字切换、骨架揭示、数字弹入 */
+  --blur-medium: 3px; /* 页面滑动、文字揭示 */
+  --blur-large: 8px; /* 成功打勾 */
+}
+
 @theme inline {
   --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Arial, sans-serif;
   --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
@@ -192,5 +229,393 @@
 
   ::-webkit-scrollbar-thumb {
     @apply bg-border/50 rounded-full hover:bg-border;
+  }
+}
+
+/* ── transitions.dev 动效配方（t-* 命名空间） ──────────────────────────────
+   来源：.claude/skills/transitions-dev/。每条配方只负责补间，尺寸 / 配色 /
+   定位一律交给组件上的 Tailwind 语义类，所以这里不出现任何硬编码色值。
+   全部数值取自上方动效令牌；偏离处已就地注明原因。 */
+@layer utilities {
+  /* 1 · 骨架屏交叉揭示（skeleton reveal）
+     骨架淡出 + 加模糊，内容淡入 + 去模糊，同时长同缓动 → 读起来是一次动作。
+     定位交给组件：画廊卡片有「固定比例(fill)」和「自然高度」两种布局分支，
+     配方不能强行给两层都上 absolute。 */
+  .t-skel {
+    position: relative;
+  }
+
+  .t-skel-skeleton,
+  .t-skel-content {
+    transition:
+      opacity var(--duration-slow) var(--ease-in-out),
+      filter var(--duration-slow) var(--ease-in-out);
+  }
+
+  .t-skel-skeleton {
+    opacity: 1;
+    filter: blur(0);
+  }
+
+  .t-skel-content {
+    opacity: 0;
+    filter: blur(var(--blur-small));
+  }
+
+  .t-skel.is-revealed .t-skel-skeleton {
+    opacity: 0;
+    filter: blur(var(--blur-small));
+  }
+
+  .t-skel.is-revealed .t-skel-content {
+    opacity: 1;
+    filter: blur(0);
+  }
+
+  /* 脉冲挂在骨架的子元素上，让骨架自身的 opacity / filter 留给上面的交叉揭示 */
+  .t-skel-skeleton.is-pulsing > * {
+    animation: t-skel-pulse 1000ms var(--ease-in-out) infinite;
+  }
+
+  /* 2 · 图标交叉切换（icon swap）
+     两枚图标叠在同一个 grid 格子里，出场的淡入去模糊回到原尺寸，退场的淡出加模糊缩小。 */
+  .t-icon-swap {
+    position: relative;
+    display: inline-grid;
+  }
+
+  .t-icon-swap .t-icon {
+    grid-area: 1 / 1;
+    transition:
+      opacity var(--duration-fast) var(--ease-in-out),
+      filter var(--duration-fast) var(--ease-in-out),
+      transform var(--duration-fast) var(--ease-in-out);
+  }
+
+  .t-icon-swap[data-state='a'] .t-icon[data-icon='a'],
+  .t-icon-swap[data-state='b'] .t-icon[data-icon='b'] {
+    opacity: 1;
+    filter: blur(0);
+    transform: scale(1);
+  }
+
+  .t-icon-swap[data-state='a'] .t-icon[data-icon='b'],
+  .t-icon-swap[data-state='b'] .t-icon[data-icon='a'] {
+    opacity: 0;
+    filter: blur(var(--blur-small));
+    transform: scale(0.25);
+  }
+
+  /* 3 · 成功打勾（success check）
+     淡入 + 转正 + 去模糊 + Y 轴回弹落位，同时描出 SVG 路径。 */
+  .t-success-check {
+    /* 位移量：配方原值 --distance-large(30px) 是给独立大图标的；按钮内联的 16px
+       图标用 30px 会冲出按钮，故内联场景由 .t-success-check-inline 降到 12px。 */
+    --t-check-y: var(--distance-large);
+    display: inline-block;
+    transform-origin: center;
+    opacity: 0;
+  }
+
+  .t-success-check-inline {
+    --t-check-y: var(--distance-medium);
+  }
+
+  .t-success-check svg {
+    display: block;
+    overflow: visible;
+  }
+
+  /* 23 = lucide <Check> 路径 "M20 6 9 17l-5-5" 在 24×24 viewBox 下的实际长度
+     22.63，按配方要求向上取整 1 个单位吸收亚像素抖动。 */
+  .t-success-check svg path {
+    stroke-dasharray: 23;
+    stroke-dashoffset: 23;
+  }
+
+  .t-success-check[data-state='in'] {
+    animation:
+      t-check-fade var(--duration-very-slow) var(--ease-smooth-out) forwards,
+      t-check-rotate var(--duration-very-slow) var(--ease-smooth-out) forwards,
+      t-check-blur var(--duration-very-slow) var(--ease-smooth-out) forwards,
+      t-check-bob var(--duration-very-slow) var(--ease-bounce) forwards;
+  }
+
+  .t-success-check[data-state='in'] svg path {
+    animation: t-check-draw var(--duration-very-slow) var(--ease-smooth-out)
+      var(--duration-micro) forwards;
+  }
+
+  /* 4 · Tabs 滑动药丸（tabs sliding）
+     JS 把激活项的 offsetLeft/offsetTop/宽高写到药丸上，补间归 CSS。
+     只补间 transform 与 width（配方原样）：同一组内各项等高，height 写完即到位，
+     放进补间反而会在首次量高时多一段无意义动画。
+     圆角与配色由组件上的语义类提供，这里只管几何与补间。 */
+  .t-tabs-pill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 0;
+    width: 0;
+    height: 0;
+    transform: translate(0, 0);
+    transition:
+      transform var(--duration-fast) var(--ease-smooth-out),
+      width var(--duration-fast) var(--ease-smooth-out);
+    will-change: transform, width;
+    pointer-events: none;
+  }
+
+  /* 首帧与 resize 时直接吸附到位，不能有补间 */
+  .t-tabs-pill.is-static {
+    transition: none;
+  }
+
+  /* 药丸就位前（SSR 首帧 / JS 未执行）由触发器自身的激活底色兜底；药丸一量好位置就
+     接管，撤掉触发器上的底色、投影与描边，避免两层叠加。属性选择器把权重顶到 (0,3,0)，
+     稳压 Tailwind 的 data-[state=active]:* 与 dark:* 工具类。
+     两条分别对应 shadcn Tabs 与 SegmentedControl。 */
+  .t-tabs-ready [data-slot='tabs-trigger'][data-state],
+  .t-tabs-ready [data-slot='segment'][data-active] {
+    background-color: transparent;
+    border-color: transparent;
+    box-shadow: none;
+  }
+
+  /* 5 · 错误抖动（error state shake）
+     四段位移 6px → -6px → 4px → 0，每段自带缓动。总时长 280ms = 80+60+80+60，
+     其中 80ms 段取 --duration-micro；60ms 段无对应令牌，沿用配方原值。 */
+  .t-shake.is-shaking {
+    animation: t-shake calc(var(--duration-micro) * 2 + 120ms) var(--ease-linear);
+  }
+
+  /* 错误文案揭示：本项目的错误行一律条件挂载、不预留空位，所以用入场动画而不是配方
+     原版的 opacity + visibility 补间——那套要求元素常驻 DOM 才有淡出可言。 */
+  .t-error-msg {
+    animation: t-error-msg-in var(--duration-medium) var(--ease-out) both;
+  }
+
+  /* 6 · 数字弹入（number pop-in）
+     数值变化时逐字符从下方带模糊回弹进场，错峰步长由调用方按索引写 animation-delay。 */
+  .t-digit-group {
+    display: inline-flex;
+    align-items: baseline;
+  }
+
+  .t-digit {
+    display: inline-block;
+  }
+
+  .t-digit-group.is-animating .t-digit {
+    animation: t-digit-pop-in var(--duration-very-slow) var(--ease-bounce) both;
+  }
+
+  /* 7 · 开关拨动（toggle）
+     滑块越过终点再荡回落位。位移写成 calc(100% - 2px)：百分比在滑块自身上解析，
+     等于沿用组件原有的 size-4 滑块 / w-8 轨道几何，换尺寸不用重算。
+     .is-init 只在用户首次拨动后挂上，否则整页开关会在挂载时集体回弹一次。 */
+  .t-toggle {
+    --t-toggle-travel: calc(100% - 2px);
+    --t-toggle-overshoot: 1px;
+  }
+
+  .t-toggle-thumb {
+    translate: 0 0;
+  }
+
+  .t-toggle[data-state='checked'] > .t-toggle-thumb {
+    translate: var(--t-toggle-travel) 0;
+  }
+
+  .t-toggle.is-init[data-state='checked'] > .t-toggle-thumb {
+    animation: t-toggle-on var(--duration-medium) var(--ease-bounce) both;
+  }
+
+  .t-toggle.is-init[data-state='unchecked'] > .t-toggle-thumb {
+    animation: t-toggle-off var(--duration-medium) var(--ease-bounce) both;
+  }
+
+  /* 8 · 悬停进出非对称（hover in / out）
+     进场快而直接，退场稍慢更松弛。这里不用 --ease-bounce-strong 过冲：图片容器
+     按图片真实比例贴合、没有裁切余量，回弹一旦缩过 1 就会露出容器底色。 */
+  .t-hover-media {
+    transition: transform var(--duration-medium) var(--ease-smooth-out);
+  }
+
+  .group:hover .t-hover-media {
+    transition: transform var(--duration-fast) var(--ease-smooth-out);
+  }
+
+  /* 画廊图片同时承担「骨架揭示」和「悬停缩放」两条补间。transition 是简写属性，
+     两条规则各写各的会互相覆盖，所以同时挂两个类时必须合并成一条声明。 */
+  .t-skel-content.t-hover-media {
+    transition:
+      opacity var(--duration-slow) var(--ease-in-out),
+      filter var(--duration-slow) var(--ease-in-out),
+      transform var(--duration-medium) var(--ease-smooth-out);
+  }
+
+  .group:hover .t-skel-content.t-hover-media {
+    transition:
+      opacity var(--duration-slow) var(--ease-in-out),
+      filter var(--duration-slow) var(--ease-in-out),
+      transform var(--duration-fast) var(--ease-smooth-out);
+  }
+}
+
+@keyframes t-skel-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes t-check-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes t-check-rotate {
+  from {
+    transform: rotate(80deg);
+  }
+  to {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes t-check-blur {
+  from {
+    filter: blur(var(--blur-large));
+  }
+  to {
+    filter: blur(0);
+  }
+}
+
+@keyframes t-check-bob {
+  from {
+    translate: 0 var(--t-check-y);
+  }
+  to {
+    translate: 0 0;
+  }
+}
+
+@keyframes t-check-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* %-停靠点是各段累计时长占总时长的比例（80/60/80/60 → 28.57/57.14/78.57/100）；
+   改任一段时长都要重算。 */
+@keyframes t-shake {
+  0% {
+    transform: translateX(0);
+    animation-timing-function: var(--ease-smooth-out);
+  }
+  28.57% {
+    transform: translateX(var(--distance-small));
+    animation-timing-function: var(--ease-smooth-out);
+  }
+  57.14% {
+    transform: translateX(calc(var(--distance-small) * -1));
+    animation-timing-function: var(--ease-smooth-out);
+  }
+  78.57% {
+    transform: translateX(var(--distance-micro));
+    animation-timing-function: var(--ease-smooth-out);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+@keyframes t-digit-pop-in {
+  0% {
+    transform: translateY(var(--distance-base));
+    opacity: 0;
+    filter: blur(var(--blur-small));
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+@keyframes t-toggle-on {
+  0% {
+    translate: 0 0;
+  }
+  55% {
+    translate: calc(var(--t-toggle-travel) + var(--t-toggle-overshoot)) 0;
+  }
+  100% {
+    translate: var(--t-toggle-travel) 0;
+  }
+}
+
+@keyframes t-toggle-off {
+  0% {
+    translate: var(--t-toggle-travel) 0;
+  }
+  55% {
+    translate: calc(0px - var(--t-toggle-overshoot)) 0;
+  }
+  100% {
+    translate: 0 0;
+  }
+}
+
+@keyframes t-error-msg-in {
+  0% {
+    opacity: 0;
+    transform: translateY(calc(var(--distance-micro) * -1));
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 系统级「减少动态效果」下，所有 t-* 配方一律停摆并落到终态。 */
+@media (prefers-reduced-motion: reduce) {
+  .t-skel-skeleton,
+  .t-skel-content,
+  .t-icon-swap .t-icon,
+  .t-tabs-pill,
+  .t-hover-media {
+    transition: none !important;
+  }
+
+  .t-skel-skeleton.is-pulsing > *,
+  .t-shake.is-shaking,
+  .t-error-msg,
+  .t-toggle.is-init > .t-toggle-thumb,
+  .t-digit-group.is-animating .t-digit {
+    animation: none !important;
+  }
+
+  .t-shake.is-shaking {
+    transform: none !important;
+  }
+
+  .t-success-check {
+    animation: none !important;
+    opacity: 1;
+  }
+
+  .t-success-check svg path {
+    animation: none !important;
+    stroke-dashoffset: 0 !important;
   }
 }

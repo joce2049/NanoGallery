@@ -4,11 +4,12 @@ import { useState, useEffect } from "react"
 import Image from "next/image"
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/shared/ui/dialog"
 import { Button } from "@/shared/ui/button"
-import { Copy, X, Heart, Sparkles, Terminal, Share2, Check, ChevronLeft, ChevronRight, Loader2, Lock } from "lucide-react"
+import { Copy, X, Heart, Sparkles, Terminal, Share2, ChevronLeft, ChevronRight, Loader2, Lock } from "lucide-react"
 import type { Prompt, Tag } from "@/core/types"
 import { getPromptTags, recordCopy, recordLike } from "@/core/data-utils"
 import { TagList } from "@/features/tags/components/tag-badge"
 import { StatsBadge } from "@/features/stats/components/stats-badge"
+import { SuccessCheck } from "@/shared/ui/success-check"
 import { copyToClipboard, getImageUrl } from "@/shared/lib/utils"
 import { toast } from "sonner"
 
@@ -301,7 +302,7 @@ export function ImageModal({ prompt, open, onOpenChange, onSelectPrompt, allProm
                         {previousPrompt && (
                             <button
                                 onClick={() => selectPrompt(previousPrompt)}
-                                className="absolute left-3 md:left-6 top-1/2 -translate-y-1/2 p-2.5 md:p-3 rounded-full bg-black/20 hover:bg-black/30 text-white md:text-foreground/80 md:hover:text-foreground dark:bg-white/10 dark:hover:bg-white/20 transition-all md:opacity-0 group-hover:opacity-100 duration-300 backdrop-blur-md z-50"
+                                className="absolute left-3 md:left-6 top-1/2 -translate-y-1/2 p-2.5 md:p-3 rounded-full bg-black/20 hover:bg-black/30 text-white md:text-foreground/80 md:hover:text-foreground dark:bg-white/10 dark:hover:bg-white/20 transition-[opacity,background-color,color] duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] md:opacity-0 group-hover:opacity-100 backdrop-blur-md z-50"
                                 aria-label="上一张"
                             >
                                 <ChevronLeft className="h-6 w-6" />
@@ -310,7 +311,7 @@ export function ImageModal({ prompt, open, onOpenChange, onSelectPrompt, allProm
                         {nextPrompt && (
                             <button
                                 onClick={() => selectPrompt(nextPrompt)}
-                                className="absolute right-3 md:right-6 top-1/2 -translate-y-1/2 p-2.5 md:p-3 rounded-full bg-black/20 hover:bg-black/30 text-white md:text-foreground/80 md:hover:text-foreground dark:bg-white/10 dark:hover:bg-white/20 transition-all md:opacity-0 group-hover:opacity-100 duration-300 backdrop-blur-md z-50"
+                                className="absolute right-3 md:right-6 top-1/2 -translate-y-1/2 p-2.5 md:p-3 rounded-full bg-black/20 hover:bg-black/30 text-white md:text-foreground/80 md:hover:text-foreground dark:bg-white/10 dark:hover:bg-white/20 transition-[opacity,background-color,color] duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] md:opacity-0 group-hover:opacity-100 backdrop-blur-md z-50"
                                 aria-label="下一张"
                             >
                                 <ChevronRight className="h-6 w-6" />
@@ -320,7 +321,7 @@ export function ImageModal({ prompt, open, onOpenChange, onSelectPrompt, allProm
                         {/* Close button for Desktop - floating on image area */}
                         <button
                             onClick={() => onOpenChange(false)}
-                            className="absolute top-6 left-6 p-3 rounded-full bg-black/20 hover:bg-black/30 text-foreground/80 hover:text-foreground dark:bg-white/10 dark:hover:bg-white/20 dark:text-foreground/80 dark:hover:text-foreground transition-all md:block hidden opacity-0 group-hover:opacity-100 duration-300 backdrop-blur-md z-50"
+                            className="absolute top-6 left-6 p-3 rounded-full bg-black/20 hover:bg-black/30 text-foreground/80 hover:text-foreground dark:bg-white/10 dark:hover:bg-white/20 dark:text-foreground/80 dark:hover:text-foreground transition-[opacity,background-color,color] duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] md:block hidden opacity-0 group-hover:opacity-100 backdrop-blur-md z-50"
                             aria-label="关闭"
                         >
                             <X className="h-6 w-6" />
@@ -329,7 +330,7 @@ export function ImageModal({ prompt, open, onOpenChange, onSelectPrompt, allProm
                         {/* Close button for Mobile - always visible, higher z-index */}
                         <button
                             onClick={() => onOpenChange(false)}
-                            className="md:hidden fixed top-4 right-4 p-2.5 rounded-full bg-black/60 hover:bg-black/80 text-white transition-all backdrop-blur-md z-[100] shadow-lg"
+                            className="md:hidden fixed top-4 right-4 p-2.5 rounded-full bg-black/60 hover:bg-black/80 text-white transition-[background-color] duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] backdrop-blur-md z-[100] shadow-lg"
                             aria-label="关闭"
                         >
                             <X className="h-5 w-5" />
@@ -436,7 +437,7 @@ export function ImageModal({ prompt, open, onOpenChange, onSelectPrompt, allProm
                                             disabled={!isPromptContentPublic || promptLoading || !activePrompt.content}
                                             aria-label="复制 Prompt"
                                         >
-                                            {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                                            {copied ? <SuccessCheck className="text-green-500" /> : <Copy className="h-4 w-4" />}
                                         </Button>
                                     </div>
                                 </div>

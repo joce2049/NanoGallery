@@ -2,8 +2,9 @@
 
 import { useState } from "react"
 import { Button } from "@/shared/ui/button"
+import { SuccessCheck } from "@/shared/ui/success-check"
 import { copyToClipboard } from "@/shared/lib/utils"
-import { Copy, Check } from "lucide-react"
+import { Copy } from "lucide-react"
 import { recordCopy } from "@/core/data-utils"
 import { toast } from "sonner"
 
@@ -32,7 +33,7 @@ export function CopyPromptButton({ promptId, content, size = "sm" }: CopyPromptB
         <Button size={size} onClick={handleCopy}>
             {copied ? (
                 <>
-                    <Check className="h-4 w-4 mr-2" />
+                    <SuccessCheck className="mr-2" />
                     已复制
                 </>
             ) : (

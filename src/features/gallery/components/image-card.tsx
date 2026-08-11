@@ -38,12 +38,19 @@ export function ImageCard({ prompt, onCardClick }: ImageCardProps) {
 
   return (
     <Card
-      className="group overflow-hidden border-border/50 bg-card hover:border-accent/50 transition-all duration-300 cursor-pointer rounded-lg p-0"
+      className="group overflow-hidden border-border/50 bg-card hover:border-accent/50 transition-[border-color] duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] cursor-pointer rounded-lg p-0"
       onClick={onCardClick}
     >
-      <div className="relative w-full bg-muted/20" style={displayRatio ? { aspectRatio: displayRatio } : undefined}>
-        {!loaded && !failed && (
-          <div className="absolute inset-0 z-10 animate-pulse bg-gradient-to-br from-muted via-muted/70 to-background" />
+      <div
+        className={`t-skel w-full bg-muted/20 ${loaded ? "is-revealed" : ""}`}
+        style={displayRatio ? { aspectRatio: displayRatio } : undefined}
+      >
+        {/* 骨架与图片同槽交叉：骨架淡出加模糊、图片淡入去模糊，共用一套时长与缓动。
+            骨架在揭示后仍留在 DOM 里承接淡出，故必须 pointer-events-none。 */}
+        {!failed && (
+          <div className="t-skel-skeleton is-pulsing pointer-events-none absolute inset-0 z-10" aria-hidden="true">
+            <div className="h-full w-full bg-gradient-to-br from-muted via-muted/70 to-background" />
+          </div>
         )}
 
         {failed ? (
@@ -60,7 +67,7 @@ export function ImageCard({ prompt, onCardClick }: ImageCardProps) {
             fill
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             loading="lazy"
-            className={`object-contain transition-all duration-300 group-hover:scale-105 ${loaded ? "opacity-100" : "opacity-0"}`}
+            className="t-skel-content t-hover-media object-contain group-hover:scale-105"
             onLoad={handleLoad}
             onError={handleError}
           />
@@ -72,14 +79,14 @@ export function ImageCard({ prompt, onCardClick }: ImageCardProps) {
             height={0}
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             loading="lazy"
-            className={`w-full h-auto object-contain transition-all duration-300 group-hover:scale-105 block ${loaded ? "opacity-100" : "opacity-0"}`}
+            className="t-skel-content t-hover-media w-full h-auto object-contain group-hover:scale-105 block"
             style={{ width: '100%', height: 'auto' }}
             onLoad={handleLoad}
             onError={handleError}
           />
         )}
 
-        <div className="absolute right-2 top-2 inline-flex items-center gap-1 rounded-full bg-black/60 px-2 py-1 text-xs font-medium text-white opacity-0 backdrop-blur transition-opacity group-hover:opacity-100 z-20">
+        <div className="absolute right-2 top-2 inline-flex items-center gap-1 rounded-full bg-black/60 px-2 py-1 text-xs font-medium text-white opacity-0 backdrop-blur transition-opacity duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] group-hover:opacity-100 z-20">
           <Eye className="h-3.5 w-3.5" />
           {prompt.views || 0}
         </div>

@@ -29,11 +29,11 @@ export function ThemeToggle() {
             className="h-9 w-9"
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
         >
-            {theme === "dark" ? (
-                <Sun className="h-5 w-5 transition-all" />
-            ) : (
-                <Moon className="h-5 w-5 transition-all" />
-            )}
+            {/* 两枚图标常驻同一个 grid 格子做交叉切换；条件渲染会整个换掉元素，过渡无从谈起 */}
+            <span className="t-icon-swap" data-state={theme === "dark" ? "b" : "a"}>
+                <Moon data-icon="a" className="t-icon h-5 w-5" />
+                <Sun data-icon="b" className="t-icon h-5 w-5" />
+            </span>
             <span className="sr-only">切换主题</span>
         </Button>
     )
